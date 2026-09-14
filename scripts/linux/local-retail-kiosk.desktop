@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=LocalRetail kiosk
+Comment=Öppnar självbetjäningen i helskärm
+Exec=bash -lc '%h/LocalRetail/scripts/linux/open-kiosk.sh'
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Phase=Application
+Terminal=false
+NoDisplay=false

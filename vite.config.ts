@@ -1,0 +1,16 @@
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { cloudflare } from "@cloudflare/vite-plugin";
+
+export default defineConfig({
+  plugins: [react(), cloudflare()],
+  server: {
+    host: true,
+    port: 5173,
+    allowedHosts: true,
+  },
+  preview: {
+    host: true,
+    port: 8080,
+  },
+});

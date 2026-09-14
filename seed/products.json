@@ -1,0 +1,618 @@
+[
+  {
+    "id": "dryck-festis-20cl",
+    "name": "Festis 20Cl",
+    "price": 10,
+    "category": "Dryck",
+    "sort": 0,
+    "active": 1
+  },
+  {
+    "id": "dryck-festis-50cl",
+    "name": "Festis 50cl",
+    "price": 20,
+    "category": "Dryck",
+    "sort": 1,
+    "active": 1
+  },
+  {
+    "id": "dryck-kaffe",
+    "name": "Kaffe",
+    "price": 10,
+    "category": "Dryck",
+    "sort": 2,
+    "active": 1
+  },
+  {
+    "id": "dryck-loka",
+    "name": "Loka",
+    "price": 20,
+    "category": "Dryck",
+    "sort": 3,
+    "active": 1
+  },
+  {
+    "id": "dryck-mer-50cl",
+    "name": "MER 50cl",
+    "price": 20,
+    "category": "Dryck",
+    "sort": 4,
+    "active": 1
+  },
+  {
+    "id": "dryck-mer-tetra-20cl",
+    "name": "MER Tetra 20cl",
+    "price": 10,
+    "category": "Dryck",
+    "sort": 5,
+    "active": 1
+  },
+  {
+    "id": "dryck-nocco",
+    "name": "Nocco",
+    "price": 25,
+    "category": "Dryck",
+    "sort": 6,
+    "active": 1
+  },
+  {
+    "id": "dryck-pepsi-max-33cl",
+    "name": "Pepsi Max 33cl",
+    "price": 20,
+    "category": "Dryck",
+    "sort": 7,
+    "active": 1
+  },
+  {
+    "id": "dryck-pepsi-max-50cl",
+    "name": "Pepsi Max 50cl",
+    "price": 20,
+    "category": "Dryck",
+    "sort": 8,
+    "active": 1
+  },
+  {
+    "id": "dryck-red-bull",
+    "name": "Red Bull",
+    "price": 20,
+    "category": "Dryck",
+    "sort": 9,
+    "active": 1
+  },
+  {
+    "id": "dryck-utforsaljning-burk",
+    "name": "Utförsäljning burk",
+    "price": 5,
+    "category": "Dryck",
+    "sort": 10,
+    "active": 1
+  },
+  {
+    "id": "dryck-utforsaljning-flaska",
+    "name": "Utförsäljning flaska",
+    "price": 10,
+    "category": "Dryck",
+    "sort": 11,
+    "active": 1
+  },
+  {
+    "id": "dryck-vatten-50cl",
+    "name": "Vatten 50cl",
+    "price": 20,
+    "category": "Dryck",
+    "sort": 12,
+    "active": 1
+  },
+  {
+    "id": "dryck-vitamin-well-50cl",
+    "name": "Vitamin well 50cl",
+    "price": 25,
+    "category": "Dryck",
+    "sort": 13,
+    "active": 1
+  },
+  {
+    "id": "entre-10-kort-ungdom-senior",
+    "name": "10-kort ungdom/senior",
+    "price": 640,
+    "category": "Entre",
+    "sort": 14,
+    "active": 1
+  },
+  {
+    "id": "entre-10-kort-vuxen",
+    "name": "10-kort Vuxen",
+    "price": 800,
+    "category": "Entre",
+    "sort": 15,
+    "active": 1
+  },
+  {
+    "id": "entre-engangsklattring-ungdom-senior",
+    "name": "Engångsklättring ungdom/senior",
+    "price": 80,
+    "category": "Entre",
+    "sort": 16,
+    "active": 1
+  },
+  {
+    "id": "entre-engangsklattring-vuxen",
+    "name": "Engångsklättring vuxen",
+    "price": 100,
+    "category": "Entre",
+    "sort": 17,
+    "active": 1
+  },
+  {
+    "id": "hyra-hyra-pads-medium",
+    "name": "Hyra pads medium",
+    "price": 50,
+    "category": "Hyra",
+    "sort": 18,
+    "active": 1
+  },
+  {
+    "id": "hyra-hyra-pads-stor",
+    "name": "Hyra pads stor",
+    "price": 100,
+    "category": "Hyra",
+    "sort": 19,
+    "active": 1
+  },
+  {
+    "id": "hyra-hyra-skor",
+    "name": "Hyra skor",
+    "price": 20,
+    "category": "Hyra",
+    "sort": 20,
+    "active": 1
+  },
+  {
+    "id": "hyra-hyra-utrustning-utomhus",
+    "name": "Hyra utrustning utomhus",
+    "price": 50,
+    "category": "Hyra",
+    "sort": 21,
+    "active": 1
+  },
+  {
+    "id": "snacks-afterwork",
+    "name": "Afterwork",
+    "price": 20,
+    "category": "Snacks",
+    "sort": 30,
+    "active": 1
+  },
+  {
+    "id": "snacks-ahlgrens-bilar",
+    "name": "Ahlgrens bilar",
+    "price": 15,
+    "category": "Snacks",
+    "sort": 31,
+    "active": 1
+  },
+  {
+    "id": "snacks-bulle",
+    "name": "Bulle",
+    "price": 25,
+    "category": "Snacks",
+    "sort": 32,
+    "active": 1
+  },
+  {
+    "id": "snacks-chips",
+    "name": "Chips",
+    "price": 15,
+    "category": "Snacks",
+    "sort": 33,
+    "active": 1
+  },
+  {
+    "id": "snacks-corny-bar",
+    "name": "Corny bar",
+    "price": 15,
+    "category": "Snacks",
+    "sort": 34,
+    "active": 1
+  },
+  {
+    "id": "snacks-festis-20cl-bulle",
+    "name": "Festis 20cl + bulle",
+    "price": 30,
+    "category": "Snacks",
+    "sort": 35,
+    "active": 1
+  },
+  {
+    "id": "snacks-festis-20cl-kaka",
+    "name": "Festis 20cl + kaka",
+    "price": 15,
+    "category": "Snacks",
+    "sort": 36,
+    "active": 1
+  },
+  {
+    "id": "snacks-frukt",
+    "name": "Frukt",
+    "price": 5,
+    "category": "Snacks",
+    "sort": 37,
+    "active": 1
+  },
+  {
+    "id": "snacks-glass-haribo",
+    "name": "Glass Haribo",
+    "price": 18,
+    "category": "Snacks",
+    "sort": 38,
+    "active": 1
+  },
+  {
+    "id": "snacks-glass-magnum-almond",
+    "name": "Glass Magnum almond",
+    "price": 28,
+    "category": "Snacks",
+    "sort": 39,
+    "active": 1
+  },
+  {
+    "id": "snacks-glass-magnum-double-gold-caramel",
+    "name": "Glass Magnum Double gold caramel",
+    "price": 28,
+    "category": "Snacks",
+    "sort": 40,
+    "active": 1
+  },
+  {
+    "id": "snacks-glass-piggelin",
+    "name": "Glass Piggelin",
+    "price": 10,
+    "category": "Snacks",
+    "sort": 41,
+    "active": 1
+  },
+  {
+    "id": "snacks-glass-sandwich",
+    "name": "Glass Sandwich",
+    "price": 20,
+    "category": "Snacks",
+    "sort": 42,
+    "active": 1
+  },
+  {
+    "id": "snacks-kaffe-kaka",
+    "name": "Kaffe+kaka",
+    "price": 15,
+    "category": "Snacks",
+    "sort": 43,
+    "active": 1
+  },
+  {
+    "id": "snacks-kaka",
+    "name": "Kaka",
+    "price": 5,
+    "category": "Snacks",
+    "sort": 44,
+    "active": 1
+  },
+  {
+    "id": "snacks-kexchoklad",
+    "name": "Kexchoklad",
+    "price": 15,
+    "category": "Snacks",
+    "sort": 45,
+    "active": 1
+  },
+  {
+    "id": "snacks-klubba",
+    "name": "Klubba",
+    "price": 5,
+    "category": "Snacks",
+    "sort": 46,
+    "active": 1
+  },
+  {
+    "id": "snacks-korv-med-brod",
+    "name": "Korv med bröd",
+    "price": 10,
+    "category": "Snacks",
+    "sort": 47,
+    "active": 1
+  },
+  {
+    "id": "snacks-korv-med-brod-20cl-dryck",
+    "name": "Korv med bröd + 20cl dryck",
+    "price": 20,
+    "category": "Snacks",
+    "sort": 48,
+    "active": 1
+  },
+  {
+    "id": "snacks-korv-med-brod-33cl-lask",
+    "name": "Korv med bröd + 33cl läsk",
+    "price": 25,
+    "category": "Snacks",
+    "sort": 49,
+    "active": 1
+  },
+  {
+    "id": "snacks-korv-med-brod-50cl-dryck",
+    "name": "Korv med bröd + 50cl dryck",
+    "price": 35,
+    "category": "Snacks",
+    "sort": 50,
+    "active": 1
+  },
+  {
+    "id": "snacks-liten-sportlunch",
+    "name": "Liten sportlunch",
+    "price": 12,
+    "category": "Snacks",
+    "sort": 51,
+    "active": 1
+  },
+  {
+    "id": "snacks-macka",
+    "name": "Macka",
+    "price": 15,
+    "category": "Snacks",
+    "sort": 52,
+    "active": 1
+  },
+  {
+    "id": "snacks-propud-bar",
+    "name": "PROPUD Bar",
+    "price": 25,
+    "category": "Snacks",
+    "sort": 53,
+    "active": 1
+  },
+  {
+    "id": "snacks-sallad",
+    "name": "Sallad",
+    "price": 100,
+    "category": "Snacks",
+    "sort": 54,
+    "active": 1
+  },
+  {
+    "id": "snacks-sportlunch",
+    "name": "Sportlunch",
+    "price": 15,
+    "category": "Snacks",
+    "sort": 55,
+    "active": 1
+  },
+  {
+    "id": "utrustning-borste-mammut",
+    "name": "Borste mammut",
+    "price": 100,
+    "category": "Utrustning",
+    "sort": 56,
+    "active": 1
+  },
+  {
+    "id": "utrustning-boulder-smash",
+    "name": "Boulder Smash",
+    "price": 250,
+    "category": "Utrustning",
+    "sort": 57,
+    "active": 1
+  },
+  {
+    "id": "utrustning-boulderguide",
+    "name": "Boulderguide",
+    "price": 250,
+    "category": "Utrustning",
+    "sort": 58,
+    "active": 1
+  },
+  {
+    "id": "utrustning-hand-balm",
+    "name": "Hand balm",
+    "price": 150,
+    "category": "Utrustning",
+    "sort": 59,
+    "active": 1
+  },
+  {
+    "id": "utrustning-hirundus-sele",
+    "name": "Hirundus sele",
+    "price": 895,
+    "category": "Utrustning",
+    "sort": 60,
+    "active": 1
+  },
+  {
+    "id": "utrustning-karbin",
+    "name": "Karbin",
+    "price": 75,
+    "category": "Utrustning",
+    "sort": 61,
+    "active": 1
+  },
+  {
+    "id": "utrustning-klubbtroja-barn-hoodie",
+    "name": "Klubbtröja barn hoodie",
+    "price": 350,
+    "category": "Utrustning",
+    "sort": 62,
+    "active": 1
+  },
+  {
+    "id": "utrustning-klubbtroja-barn-t-shirt",
+    "name": "Klubbtröja barn t-shirt",
+    "price": 160,
+    "category": "Utrustning",
+    "sort": 63,
+    "active": 1
+  },
+  {
+    "id": "utrustning-klubbtroja-vuxen-hoodie",
+    "name": "Klubbtröja vuxen hoodie",
+    "price": 450,
+    "category": "Utrustning",
+    "sort": 64,
+    "active": 1
+  },
+  {
+    "id": "utrustning-klubbtroja-vuxen-t-shirt",
+    "name": "Klubbtröja vuxen t-shirt",
+    "price": 170,
+    "category": "Utrustning",
+    "sort": 65,
+    "active": 1
+  },
+  {
+    "id": "utrustning-klatterguide",
+    "name": "Klätterguide",
+    "price": 390,
+    "category": "Utrustning",
+    "sort": 66,
+    "active": 1
+  },
+  {
+    "id": "utrustning-kritblock",
+    "name": "Kritblock",
+    "price": 55,
+    "category": "Utrustning",
+    "sort": 67,
+    "active": 1
+  },
+  {
+    "id": "utrustning-kritboll",
+    "name": "Kritboll",
+    "price": 65,
+    "category": "Utrustning",
+    "sort": 68,
+    "active": 1
+  },
+  {
+    "id": "utrustning-kritpase-8cplus",
+    "name": "Kritpåse 8cplus",
+    "price": 100,
+    "category": "Utrustning",
+    "sort": 69,
+    "active": 1
+  },
+  {
+    "id": "utrustning-kritpase-metrolius",
+    "name": "Kritpåse metrolius",
+    "price": 200,
+    "category": "Utrustning",
+    "sort": 70,
+    "active": 1
+  },
+  {
+    "id": "utrustning-lapisborste",
+    "name": "Lapisborste",
+    "price": 95,
+    "category": "Utrustning",
+    "sort": 71,
+    "active": 1
+  },
+  {
+    "id": "utrustning-liquid-chalk",
+    "name": "Liquid chalk",
+    "price": 120,
+    "category": "Utrustning",
+    "sort": 72,
+    "active": 1
+  },
+  {
+    "id": "utrustning-liquid-white-gold",
+    "name": "Liquid White Gold",
+    "price": 90,
+    "category": "Utrustning",
+    "sort": 73,
+    "active": 1
+  },
+  {
+    "id": "utrustning-power-crunch",
+    "name": "Power crunch",
+    "price": 120,
+    "category": "Utrustning",
+    "sort": 74,
+    "active": 1
+  },
+  {
+    "id": "utrustning-power-crunch-100g",
+    "name": "Power crunch 100g",
+    "price": 99,
+    "category": "Utrustning",
+    "sort": 75,
+    "active": 1
+  },
+  {
+    "id": "utrustning-power-crunch-300g",
+    "name": "Power crunch 300g",
+    "price": 189,
+    "category": "Utrustning",
+    "sort": 76,
+    "active": 1
+  },
+  {
+    "id": "utrustning-power-crunch-box",
+    "name": "Power crunch box",
+    "price": 119,
+    "category": "Utrustning",
+    "sort": 77,
+    "active": 1
+  },
+  {
+    "id": "utrustning-power-liquid",
+    "name": "Power liquid",
+    "price": 90,
+    "category": "Utrustning",
+    "sort": 78,
+    "active": 1
+  },
+  {
+    "id": "utrustning-skin-maintenance-kit",
+    "name": "Skin Maintenance kit",
+    "price": 350,
+    "category": "Utrustning",
+    "sort": 79,
+    "active": 1
+  },
+  {
+    "id": "utrustning-sportklatterguide",
+    "name": "Sportklätterguide",
+    "price": 250,
+    "category": "Utrustning",
+    "sort": 80,
+    "active": 1
+  },
+  {
+    "id": "utrustning-sporttejprulle",
+    "name": "Sporttejprulle",
+    "price": 45,
+    "category": "Utrustning",
+    "sort": 81,
+    "active": 1
+  },
+  {
+    "id": "utrustning-venga",
+    "name": "Venga",
+    "price": 600,
+    "category": "Utrustning",
+    "sort": 82,
+    "active": 1
+  },
+  {
+    "id": "utrustning-vastervik-bloc",
+    "name": "Västervik - Bloc",
+    "price": 300,
+    "category": "Utrustning",
+    "sort": 83,
+    "active": 1
+  },
+  {
+    "id": "utrustning-white-gold-200g",
+    "name": "White gold 200g",
+    "price": 169,
+    "category": "Utrustning",
+    "sort": 84,
+    "active": 1
+  }
+]
