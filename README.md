@@ -25,6 +25,12 @@ Uppdatera senare:
 
 Sätt automatisk inloggning för kassaanvändaren så kiosken kommer upp utan att någon behöver logga in för hand.
 
+Installationen slår på SSH-server på kassadatorn. Anslut med Windows inbyggda OpenSSH eller valfri klient:
+
+```text
+ssh ANVÄNDARE@DATORNS-IP
+```
+
 ## Utveckling
 
 ```bash

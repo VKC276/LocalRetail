@@ -29,6 +29,7 @@ echo "Installerar LocalRetail från $REPO"
 
 need_node
 need_browser
+bash "$REPO/scripts/linux/enable-ssh.sh"
 
 cd "$REPO"
 chmod +x "$REPO/scripts/linux/"*.sh
@@ -75,6 +76,7 @@ echo
 echo "Klart. Kassan servas på http://${IP:-127.0.0.1}:8080/"
 echo "Admin:         http://${IP:-127.0.0.1}:8080/admin"
 echo "Pinkod vid första start: 1234"
+echo "SSH:           ssh $USER@${IP:-IP-ADRESS}"
 echo
 echo "Vid nästa inloggning/omstart öppnas kassan i kioskläge."
 echo "Sätt automatisk inloggning för den här användaren så kiosken startar av sig själv."
