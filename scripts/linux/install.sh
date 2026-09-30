@@ -37,7 +37,7 @@ EOF
 IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
 echo
 echo "Klart. Kassan öppnas mot GitHub Pages (ingen lokal webserver)."
-echo "URL: ${LOCAL_RETAIL_URL:-https://vkc276.github.io/LocalRetail/?kiosk=1}"
+echo "URL: ${LOCAL_RETAIL_URL:-https://ledinfo.vastervikclimbing.se/LocalRetail/?kiosk=1}"
 echo "SSH: ssh $USER@${IP:-IP-ADRESS}"
 echo
 echo "Vid nästa inloggning/omstart öppnas kassan i kioskläge."
