@@ -9,6 +9,7 @@ import VirtualKeyboard from "../components/VirtualKeyboard";
 import { formatSek } from "../format";
 
 const PAYMENT_TIMEOUT_MS = 2 * 60 * 1000;
+const SEARCH_IDLE_MS = 2 * 60 * 1000;
 const CART_IDLE_MS = 5 * 60 * 1000;
 const CART_WARN_MS = 60 * 1000;
 
@@ -198,13 +199,17 @@ export default function Kiosk() {
     }
   };
 
+  const clearSearch = () => {
+    setQuery("");
+    setKeyboardOpen(false);
+  };
+
   const reset = () => {
     setCart([]);
     setCheckout(null);
     setPayLeftMs(null);
-    setQuery("");
+    clearSearch();
     setCategory("Alla");
-    setKeyboardOpen(false);
     setIdleLeftMs(null);
     lastActivity.current = Date.now();
   };
@@ -251,7 +256,7 @@ export default function Kiosk() {
       const remaining = CART_IDLE_MS - (Date.now() - lastActivity.current);
       if (remaining <= 0) {
         setCart([]);
-        setKeyboardOpen(false);
+        clearSearch();
         setIdleLeftMs(null);
         return;
       }
@@ -261,6 +266,17 @@ export default function Kiosk() {
     const timer = window.setInterval(tick, 250);
     return () => window.clearInterval(timer);
   }, [cart.length, checkout]);
+
+  useEffect(() => {
+    if ((!query && !keyboardOpen) || checkout) return;
+    const tick = () => {
+      if (Date.now() - lastActivity.current < SEARCH_IDLE_MS) return;
+      clearSearch();
+    };
+    tick();
+    const timer = window.setInterval(tick, 1000);
+    return () => window.clearInterval(timer);
+  }, [query, keyboardOpen, checkout]);
 
   return (
     <div
@@ -277,13 +293,24 @@ export default function Kiosk() {
             </div>
           </div>
         </div>
-        <button
-          type="button"
-          className={`search-field ${query ? "" : "empty"} ${keyboardOpen ? "active" : ""}`}
-          onClick={() => setKeyboardOpen(true)}
-        >
-          {query || "Sök produkt"}
-        </button>
+        <div className={`search-field ${query ? "" : "empty"} ${keyboardOpen ? "active" : ""}`}>
+          <button type="button" className="search-field-main" onClick={() => setKeyboardOpen(true)}>
+            {query || "Sök produkt"}
+          </button>
+          {query ? (
+            <button
+              type="button"
+              className="search-clear"
+              aria-label="Rensa sökning"
+              onClick={() => {
+                bumpActivity();
+                clearSearch();
+              }}
+            >
+              ×
+            </button>
+          ) : null}
+        </div>
         <div className="cats">
           {["Alla", ...(catalog?.categories ?? [])].map((name) => (
             <button key={name} type="button" className={`chip ${category === name ? "on" : ""}`} onClick={() => setCategory(name)}>

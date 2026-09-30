@@ -250,10 +250,43 @@ p {
   background: var(--bg-strong);
   border: 1px solid var(--line);
   display: flex;
-  align-items: center;
-  padding: 0 18px;
+  align-items: stretch;
+  padding: 0;
   font-size: 24px;
   color: var(--ink);
+  overflow: hidden;
+}
+
+.search-field-main {
+  flex: 1;
+  min-width: 0;
+  min-height: 64px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  padding: 0 18px;
+}
+
+.search-field.empty .search-field-main {
+  color: var(--muted);
+}
+
+.search-clear {
+  flex: 0 0 auto;
+  min-width: 64px;
+  min-height: 64px;
+  border: 0;
+  border-radius: 0;
+  border-left: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  font-size: 36px;
+  font-weight: 400;
+  line-height: 1;
+  padding: 0;
 }
 
 .search-field.empty {
