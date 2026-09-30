@@ -38,6 +38,11 @@ function flyArcPath(dx: number, dy: number) {
   return `M 0 0 Q ${n(cx)} ${n(cy)} ${n(dx)} ${n(dy)}`;
 }
 
+function formatPayCountdown(ms: number) {
+  const sec = Math.max(0, Math.ceil(ms / 1000));
+  return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
+}
+
 export default function Kiosk() {
   const [searchParams] = useSearchParams();
   const kioskDisplay = searchParams.has("kiosk");
@@ -49,6 +54,7 @@ export default function Kiosk() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [paying, setPaying] = useState(false);
   const [checkout, setCheckout] = useState<CheckoutResult | null>(null);
+  const [payLeftMs, setPayLeftMs] = useState<number | null>(null);
   const [idleLeftMs, setIdleLeftMs] = useState<number | null>(null);
   const [flyers, setFlyers] = useState<Flyer[]>([]);
   const [pulseId, setPulseId] = useState<string | null>(null);
@@ -202,17 +208,29 @@ export default function Kiosk() {
   };
 
   useEffect(() => {
-    if (!checkout) return;
-    const timer = window.setTimeout(() => {
-      setCart([]);
-      setCheckout(null);
-      setQuery("");
-      setCategory("Alla");
-      setKeyboardOpen(false);
-      setIdleLeftMs(null);
-      lastActivity.current = Date.now();
-    }, PAYMENT_TIMEOUT_MS);
-    return () => window.clearTimeout(timer);
+    if (!checkout) {
+      setPayLeftMs(null);
+      return;
+    }
+    const started = Date.now();
+    const tick = () => {
+      const remaining = PAYMENT_TIMEOUT_MS - (Date.now() - started);
+      if (remaining <= 0) {
+        setCart([]);
+        setCheckout(null);
+        setPayLeftMs(null);
+        setQuery("");
+        setCategory("Alla");
+        setKeyboardOpen(false);
+        setIdleLeftMs(null);
+        lastActivity.current = Date.now();
+        return;
+      }
+      setPayLeftMs(remaining);
+    };
+    tick();
+    const timer = window.setInterval(tick, 250);
+    return () => window.clearInterval(timer);
   }, [checkout]);
 
   useEffect(() => {
@@ -338,8 +356,10 @@ export default function Kiosk() {
               ))}
             </ul>
             <img src={checkout.qrDataUrl} alt="Swish QR-kod" />
-            <p>Öppna Swish och skanna koden. Meddelande: {checkout.message}</p>
-            <p className="checkout-timeout">Rutan stängs automatiskt efter 2 minuter.</p>
+            <p className="checkout-prompt">Öppna Swish och skanna koden</p>
+            <p className="checkout-timeout" aria-live="polite">
+              {formatPayCountdown(payLeftMs ?? PAYMENT_TIMEOUT_MS)}
+            </p>
             <button type="button" className="primary" onClick={reset}>
               Ny kund
             </button>

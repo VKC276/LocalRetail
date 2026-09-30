@@ -734,9 +734,20 @@ p {
   border-radius: 12px;
 }
 
+.checkout-prompt {
+  margin: 8px 0 4px;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
 .checkout-timeout {
   color: var(--muted);
-  font-size: 16px;
+  font-size: 28px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  margin: 0 0 16px;
 }
 
 .idle-warn {
