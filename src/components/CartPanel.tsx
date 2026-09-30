@@ -29,11 +29,7 @@ const CartPanel = forwardRef<HTMLElement, Props>(function CartPanel(
           type="button"
           className="ghost cart-clear"
           disabled={items.length === 0 || paying}
-          onClick={() => {
-            if (items.length === 0 || paying) return;
-            if (!window.confirm("Tömma hela varukorgen?")) return;
-            onClear();
-          }}
+          onClick={onClear}
         >
           Töm
         </button>
