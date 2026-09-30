@@ -24,7 +24,7 @@ jobs:
       - run: npm ci
       - run: npm run build
         env:
-          VITE_BASE: /LocalRetail/
+          VITE_BASE: /
           VITE_WALLFLOW_URL: https://wallflow.muddy-rice-38d4.workers.dev
       - uses: JamesIves/github-pages-deploy-action@v4
         with:

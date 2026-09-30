@@ -687,6 +687,18 @@ p {
   box-shadow: var(--shadow);
 }
 
+.checkout-items {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  text-align: left;
+}
+
+.checkout-items li {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line, rgba(0, 0, 0, 0.08));
+}
+
 .checkout-card img {
   width: min(420px, 68vw);
   height: auto;

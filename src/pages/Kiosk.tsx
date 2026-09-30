@@ -6,7 +6,7 @@ import { swishQrDataUrl } from "../swishQr";
 import CartPanel from "../components/CartPanel";
 import ProductTile from "../components/ProductTile";
 import VirtualKeyboard from "../components/VirtualKeyboard";
-import { formatSek } from "../format";
+import { formatSek, swishCheckoutMessage } from "../format";
 
 const PAYMENT_TIMEOUT_MS = 2 * 60 * 1000;
 const CART_IDLE_MS = 5 * 60 * 1000;
@@ -174,7 +174,7 @@ export default function Kiosk() {
       const amount = Math.round(lines.reduce((sum, item) => sum + item.price * item.qty, 0) * 100) / 100;
       if (amount < 1) throw new Error("Beloppet måste vara minst 1 kr");
       const orderId = crypto.randomUUID().slice(0, 8).toUpperCase();
-      const message = `Kassa ${orderId}`;
+      const message = swishCheckoutMessage(orderId, lines);
       const result = {
         orderId,
         amount,
@@ -330,6 +330,13 @@ export default function Kiosk() {
             <p>
               Order {checkout.orderId} · {formatSek(checkout.amount)}
             </p>
+            <ul className="checkout-items">
+              {checkout.items.map((item) => (
+                <li key={item.id}>
+                  {item.name} × {item.qty} · {formatSek(item.price * item.qty)}
+                </li>
+              ))}
+            </ul>
             <img src={checkout.qrDataUrl} alt="Swish QR-kod" />
             <p>Öppna Swish och skanna koden. Meddelande: {checkout.message}</p>
             <p className="checkout-timeout">Rutan stängs automatiskt efter 2 minuter.</p>

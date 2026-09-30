@@ -4,9 +4,9 @@ Självbetjäning för kassan. Sidan körs på **GitHub Pages**. Varor, priser oc
 
 ## Kassa
 
-Efter deploy: [https://ledinfo.vastervikclimbing.se/LocalRetail/](https://ledinfo.vastervikclimbing.se/LocalRetail/)
+Efter deploy: [https://retail.vastervikclimbing.se/](https://retail.vastervikclimbing.se/)
 
-I GitHub: **Settings → Pages → Deploy from a branch** → branch `gh-pages`, folder `/ (root)`. Workflow **GitHub Pages** bygger `dist` och pushar dit.
+I GitHub: **Settings → Pages → Deploy from a branch** → branch `gh-pages`, folder `/ (root)`. Custom domain: `retail.vastervikclimbing.se`.
 
 Kassan läser **en rad** (`/kiosk/revision`) var femte minut. Bara om revisionen ändrats hämtas katalogen, och bara nya bildhashar laddas hem. Övriga bilder ligger kvar i kassans IndexedDB.
 

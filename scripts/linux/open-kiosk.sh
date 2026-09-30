@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-URL="${LOCAL_RETAIL_URL:-https://ledinfo.vastervikclimbing.se/LocalRetail/?kiosk=1}"
+URL="${LOCAL_RETAIL_URL:-https://retail.vastervikclimbing.se/?kiosk=1}"
 
 browser() {
   for cmd in chromium-browser chromium google-chrome-stable google-chrome; do
