@@ -30,6 +30,20 @@ bash scripts/linux/install.sh
 
 Öppnar GitHub Pages i Chromium kioskläge. SSH-server installeras; ingen lokal webserver.
 
+## Windows-kiosk
+
+1. Installera **Chrome** eller **Edge**.
+2. Kör `scripts\windows\open-kiosk.bat` (dubbelklicka).
+
+Det öppnar [https://retail.vastervikclimbing.se/?kiosk=1](https://retail.vastervikclimbing.se/?kiosk=1) i helskärm (`--kiosk`). `?kiosk=1` döljer muspekaren.
+
+**Autostart:** högerklicka `open-kiosk.bat` → Skapa genväg → lägg genvägen i  
+`shell:startup` (Win+R → skriv `shell:startup`).
+
+**Lämna kiosken:** Alt+F4, eller Alt+Tab tillbaka till skrivbordet.
+
+**Striktare låsning (valfritt):** Windows-inställningar → Konton → Inloggningsalternativ / Kiosk (Assigned Access) med Edge och samma URL.
+
 ## Utveckling
 
 ```bash
