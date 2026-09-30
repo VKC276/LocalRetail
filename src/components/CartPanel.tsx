@@ -23,7 +23,21 @@ const CartPanel = forwardRef<HTMLElement, Props>(function CartPanel(
 
   return (
     <aside className="cart" ref={ref}>
-      <h2>Varukorg</h2>
+      <div className="cart-head">
+        <h2>Varukorg</h2>
+        <button
+          type="button"
+          className="ghost cart-clear"
+          disabled={items.length === 0 || paying}
+          onClick={() => {
+            if (items.length === 0 || paying) return;
+            if (!window.confirm("Tömma hela varukorgen?")) return;
+            onClear();
+          }}
+        >
+          Töm
+        </button>
+      </div>
       <div className="cart-list">
         {items.length === 0 ? <p className="warn">Tryck på en produkt för att lägga den här.</p> : null}
         {items.map((item) => (
@@ -58,9 +72,6 @@ const CartPanel = forwardRef<HTMLElement, Props>(function CartPanel(
       ) : null}
       {disabledReason ? <p className="warn">{disabledReason}</p> : null}
       <div className="cart-actions">
-        <button type="button" className="ghost cart-clear" disabled={items.length === 0 || paying} onClick={onClear}>
-          Töm varukorg
-        </button>
         <button type="button" className="primary pay-btn" disabled={items.length === 0 || paying || Boolean(disabledReason)} onClick={onPay}>
           {paying ? "Skapar Swish…" : "Betala med Swish"}
         </button>

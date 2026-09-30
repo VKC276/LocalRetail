@@ -384,8 +384,32 @@ p {
   padding: 18px;
 }
 
+.cart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .cart h2 {
   font-size: 28px;
+  margin: 0;
+}
+
+.cart-head .cart-clear {
+  min-height: 44px;
+  min-width: auto;
+  width: auto;
+  padding: 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--muted, #5c635c);
+  background: transparent;
+  border: 1px solid var(--line, rgba(0, 0, 0, 0.12));
+}
+
+.cart-head .cart-clear:disabled {
+  opacity: 0.35;
 }
 
 .cart-list {
@@ -512,8 +536,10 @@ p {
 .cart-actions {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  margin-top: 8px;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line, rgba(0, 0, 0, 0.08));
 }
 
 .cart-actions .cart-clear,
