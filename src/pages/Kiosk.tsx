@@ -61,6 +61,7 @@ export default function Kiosk() {
   const lastActivity = useRef(Date.now());
   const cartRef = useRef<HTMLElement>(null);
   const flyerSeq = useRef(0);
+  const checkoutSettled = useRef(false);
 
   const bumpActivity = () => {
     lastActivity.current = Date.now();
@@ -189,7 +190,7 @@ export default function Kiosk() {
         items: lines,
       };
       setCheckout(result);
-      void recordKioskSale(result);
+      checkoutSettled.current = false;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kunde inte skapa Swish-QR");
     } finally {
@@ -200,6 +201,7 @@ export default function Kiosk() {
   const reset = () => {
     setCart([]);
     setCheckout(null);
+    setPayLeftMs(null);
     setQuery("");
     setCategory("Alla");
     setKeyboardOpen(false);
@@ -207,23 +209,30 @@ export default function Kiosk() {
     lastActivity.current = Date.now();
   };
 
+  const markPaid = (sale: CheckoutResult) => {
+    if (checkoutSettled.current) return;
+    checkoutSettled.current = true;
+    void recordKioskSale(sale);
+    reset();
+  };
+
+  const cancelCheckout = () => {
+    if (checkoutSettled.current) return;
+    checkoutSettled.current = true;
+    reset();
+  };
+
   useEffect(() => {
     if (!checkout) {
       setPayLeftMs(null);
       return;
     }
+    const sale = checkout;
     const started = Date.now();
     const tick = () => {
       const remaining = PAYMENT_TIMEOUT_MS - (Date.now() - started);
       if (remaining <= 0) {
-        setCart([]);
-        setCheckout(null);
-        setPayLeftMs(null);
-        setQuery("");
-        setCategory("Alla");
-        setKeyboardOpen(false);
-        setIdleLeftMs(null);
-        lastActivity.current = Date.now();
+        markPaid(sale);
         return;
       }
       setPayLeftMs(remaining);
@@ -360,9 +369,14 @@ export default function Kiosk() {
             <p className="checkout-timeout" aria-live="polite">
               {formatPayCountdown(payLeftMs ?? PAYMENT_TIMEOUT_MS)}
             </p>
-            <button type="button" className="primary" onClick={reset}>
-              Ny kund
-            </button>
+            <div className="checkout-actions">
+              <button type="button" className="primary pay-btn" onClick={() => markPaid(checkout)}>
+                Jag har betalat
+              </button>
+              <button type="button" className="ghost checkout-cancel" onClick={cancelCheckout}>
+                Avbryt
+              </button>
+            </div>
           </div>
         </div>
       ) : null}
