@@ -296,7 +296,7 @@ export default function Kiosk() {
         idleLeftMs={idleLeftMs}
         onStay={bumpActivity}
         pulseId={pulseId}
-        disabledReason={catalog && !catalog.swishConfigured ? "Swish-nummer saknas. Lägg till det i WallFlow under Kassasortiment." : null}
+        disabledReason={catalog && !catalog.swishConfigured ? "Swish-nummer saknas. Lägg till det i WallFlow under Självbetjäningskassa." : null}
       />
 
       <div className="fly-layer" aria-hidden="true">

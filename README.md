@@ -10,7 +10,7 @@ I GitHub: **Settings → Pages → Deploy from a branch** → branch `gh-pages`,
 
 Kassan läser **en rad** (`/kiosk/revision`) var femte minut. Bara om revisionen ändrats hämtas katalogen, och bara nya bildhashar laddas hem. Övriga bilder ligger kvar i kassans IndexedDB.
 
-Swish-QR skapas i webbläsaren. Swish-nummer sätts i WallFlow under **Ekonomi → Kassasortiment**.
+Swish-QR skapas i webbläsaren. Swish-nummer sätts i WallFlow under **Ekonomi → Självbetjäningskassa**.
 
 ## WallFlow (en gång)
 
