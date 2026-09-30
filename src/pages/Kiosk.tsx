@@ -370,11 +370,11 @@ export default function Kiosk() {
               {formatPayCountdown(payLeftMs ?? PAYMENT_TIMEOUT_MS)}
             </p>
             <div className="checkout-actions">
-              <button type="button" className="primary pay-btn" onClick={() => markPaid(checkout)}>
-                Jag har betalat
-              </button>
               <button type="button" className="checkout-cancel" onClick={cancelCheckout}>
                 Avbryt
+              </button>
+              <button type="button" className="primary pay-btn" onClick={() => markPaid(checkout)}>
+                Jag har betalat
               </button>
             </div>
           </div>

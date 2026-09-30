@@ -753,22 +753,38 @@ p {
 
 .checkout-actions {
   display: flex;
-  flex-direction: column;
-  gap: 28px;
-  margin-top: 8px;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 16px;
+  margin-top: 12px;
+  width: 100%;
 }
 
 .checkout-actions .pay-btn,
 .checkout-cancel {
-  width: 100%;
-  min-height: 56px;
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  min-height: 72px;
+  padding: 14px 18px;
+  border-radius: 6px;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+  touch-action: manipulation;
+}
+
+.checkout-actions .pay-btn {
+  background: var(--pay);
 }
 
 .checkout-cancel {
   background: var(--danger);
   color: #fff;
-  font-size: 20px;
-  font-weight: 700;
+}
+
+.kiosk.theme-dark .checkout-actions .pay-btn {
+  color: #06200c;
 }
 
 .kiosk.theme-dark .checkout-cancel,
