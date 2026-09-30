@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { api, mediaUrl, type CartItem, type Catalog, type CheckoutResult, type Product } from "../api";
+import { CATALOG_POLL_MS, fetchCatalog, fetchCatalogRevision, recordKioskSale, type CartItem, type Catalog, type CheckoutResult, type Product } from "../api";
+import { readCachedCatalog, readCachedRevision, withLocalImages, writeCachedCatalog } from "../catalogCache";
+import { swishQrDataUrl } from "../swishQr";
 import CartPanel from "../components/CartPanel";
 import ProductTile from "../components/ProductTile";
 import VirtualKeyboard from "../components/VirtualKeyboard";
@@ -60,15 +62,41 @@ export default function Kiosk() {
   };
 
   useEffect(() => {
-    api<Catalog>("/api/catalog")
-      .then((data) =>
-        setCatalog({
-          ...data,
-          logoUrl: mediaUrl(data.logoUrl),
-          products: data.products.map((product) => ({ ...product, imageUrl: mediaUrl(product.imageUrl) })),
-        }),
-      )
-      .catch((err: Error) => setError(err.message));
+    let cancelled = false;
+    const applyCatalog = async (data: Catalog) => {
+      const local = await withLocalImages(data);
+      await writeCachedCatalog(data);
+      if (!cancelled) setCatalog(local);
+    };
+    const refresh = async (force: boolean) => {
+      try {
+        const remoteRev = await fetchCatalogRevision();
+        const localRev = await readCachedRevision();
+        if (!force && localRev != null && remoteRev === localRev) return;
+        const data = await fetchCatalog();
+        await applyCatalog(data);
+        if (!cancelled) setError(null);
+      } catch (err) {
+        if (cancelled) return;
+        const cached = await readCachedCatalog();
+        if (cached) {
+          setCatalog(await withLocalImages(cached));
+          setError(null);
+        } else {
+          setError(err instanceof Error ? err.message : "Kunde inte hämta katalogen");
+        }
+      }
+    };
+    void (async () => {
+      const cached = await readCachedCatalog();
+      if (cached && !cancelled) setCatalog(await withLocalImages(cached));
+      await refresh(false);
+    })();
+    const timer = window.setInterval(() => void refresh(false), CATALOG_POLL_MS);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
   }, []);
 
   const featured = useMemo(() => {
@@ -140,11 +168,22 @@ export default function Kiosk() {
     setPaying(true);
     setError(null);
     try {
-      const result = await api<CheckoutResult>("/api/checkout", {
-        method: "POST",
-        body: JSON.stringify({ items: cart.map((item) => ({ id: item.id, qty: item.qty })) }),
-      });
+      const payee = String(catalog?.swishNumber || "").replace(/\s+/g, "");
+      if (!payee) throw new Error("Swish-nummer saknas. Lägg till det i WallFlow.");
+      const lines = cart.map((item) => ({ id: item.id, name: item.name, price: item.price, qty: item.qty }));
+      const amount = Math.round(lines.reduce((sum, item) => sum + item.price * item.qty, 0) * 100) / 100;
+      if (amount < 1) throw new Error("Beloppet måste vara minst 1 kr");
+      const orderId = crypto.randomUUID().slice(0, 8).toUpperCase();
+      const message = `Kassa ${orderId}`;
+      const result = {
+        orderId,
+        amount,
+        message,
+        qrDataUrl: swishQrDataUrl(payee, amount, message),
+        items: lines,
+      };
       setCheckout(result);
+      void recordKioskSale(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Kunde inte skapa Swish-QR");
     } finally {
@@ -257,7 +296,7 @@ export default function Kiosk() {
         idleLeftMs={idleLeftMs}
         onStay={bumpActivity}
         pulseId={pulseId}
-        disabledReason={catalog && !catalog.swishConfigured ? "Swish-nummer saknas. Lägg till det under Administration." : null}
+        disabledReason={catalog && !catalog.swishConfigured ? "Swish-nummer saknas. Lägg till det i WallFlow under Kassasortiment." : null}
       />
 
       <div className="fly-layer" aria-hidden="true">

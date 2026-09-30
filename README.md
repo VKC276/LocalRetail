@@ -1,41 +1,39 @@
 # LocalRetail
 
-Självbetjäning och admin för lokal kassa. En Linuxdator i butiken servar både kiosken och adminsidan på det lokala nätet.
+Självbetjäning för kassan. Sidan körs på **GitHub Pages**. Varor, priser och bilder administreras i **WallFlow** (admin, superadmin eller kassör).
 
-## På kassadatorn
+## Kassa
 
-```bash
-git clone <url-till-LocalRetail> ~/LocalRetail
-cd ~/LocalRetail
-chmod +x scripts/linux/*.sh
-./scripts/linux/install.sh
-```
+Efter deploy: [https://vkc276.github.io/LocalRetail/](https://vkc276.github.io/LocalRetail/)
 
-Efter installation:
+I GitHub: **Settings → Pages → GitHub Actions**. Första push till `master`/`main` bygger och publicerar.
 
-- Kassa: `http://DATORNS-IP:8080/`
-- Admin: `http://DATORNS-IP:8080/admin` (pinkod, första gången `1234`)
-- Vid uppstart/inloggning öppnas kassan i kioskläge (helskärm)
+Kassan läser **en rad** (`/kiosk/revision`) var femte minut. Bara om revisionen ändrats hämtas katalogen, och bara nya bildhashar laddas hem. Övriga bilder ligger kvar i kassans IndexedDB.
 
-Uppdatera senare:
+Swish-QR skapas i webbläsaren. Swish-nummer sätts i WallFlow under **Ekonomi → Kassasortiment**.
+
+## WallFlow (en gång)
 
 ```bash
-~/LocalRetail/scripts/linux/update.sh
+cd cloudflare
+npx wrangler d1 execute wallflow --remote --file=migrations/0008_kiosk_catalog.sql
+npx wrangler deploy
 ```
 
-Sätt automatisk inloggning för kassaanvändaren så kiosken kommer upp utan att någon behöver logga in för hand.
+Publicera WallFlow-frontenden som vanligt (`index.html` + `kiosk-catalog.js`).
 
-Installationen slår på SSH-server på kassadatorn. Anslut med Windows inbyggda OpenSSH eller valfri klient:
+## Linux-kiosk
 
-```text
-ssh ANVÄNDARE@DATORNS-IP
+```bash
+bash scripts/linux/install.sh
 ```
+
+Öppnar GitHub Pages i Chromium kioskläge. SSH-server installeras; ingen lokal webserver.
 
 ## Utveckling
 
 ```bash
 npm install
+cp .env.example .env
 npm run dev
 ```
-
-Öppna `http://localhost:5173/` och `http://localhost:5173/admin`.

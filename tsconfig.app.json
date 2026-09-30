@@ -18,5 +18,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/pages/Admin.tsx", "src/components/SalesReport.tsx", "src/components/PinPad.tsx"]
 }

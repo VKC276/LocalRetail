@@ -4,17 +4,6 @@ set -euo pipefail
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 USER_SYSTEMD="$HOME/.config/systemd/user"
 AUTOSTART="$HOME/.config/autostart"
-NPM="$(command -v npm)"
-NODE_DIR="$(dirname "$NPM")"
-
-need_node() {
-  if ! command -v node >/dev/null 2>&1; then
-    echo "Node.js saknas. Installera Node 22, till exempel:" >&2
-    echo "  curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -" >&2
-    echo "  sudo apt-get install -y nodejs" >&2
-    exit 1
-  fi
-}
 
 need_browser() {
   if command -v chromium-browser >/dev/null 2>&1; then return 0; fi
@@ -25,37 +14,15 @@ need_browser() {
   sudo apt-get install -y chromium-browser || sudo apt-get install -y chromium
 }
 
-echo "Installerar LocalRetail från $REPO"
+echo "Installerar LocalRetail-kiosk från $REPO"
 
-need_node
 need_browser
 bash "$REPO/scripts/linux/enable-ssh.sh"
 
-cd "$REPO"
 chmod +x "$REPO/scripts/linux/"*.sh
-npm install
-npm run build
-
-mkdir -p "$USER_SYSTEMD" "$AUTOSTART"
-
-cat > "$USER_SYSTEMD/local-retail.service" <<EOF
-[Unit]
-Description=LocalRetail kassa och admin
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=simple
-WorkingDirectory=$REPO
-Environment=NODE_ENV=production
-Environment=PATH=$NODE_DIR:/usr/local/bin:/usr/bin:/bin
-ExecStart=$NPM run serve
-Restart=always
-RestartSec=3
-
-[Install]
-WantedBy=default.target
-EOF
+mkdir -p "$AUTOSTART"
+rm -f "$USER_SYSTEMD/local-retail.service"
+systemctl --user disable --now local-retail.service >/dev/null 2>&1 || true
 
 cat > "$AUTOSTART/local-retail-kiosk.desktop" <<EOF
 [Desktop Entry]
@@ -67,16 +34,11 @@ X-GNOME-Autostart-enabled=true
 Terminal=false
 EOF
 
-systemctl --user daemon-reload
-systemctl --user enable --now local-retail.service
-loginctl enable-linger "$USER" >/dev/null 2>&1 || true
-
 IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
 echo
-echo "Klart. Kassan servas på http://${IP:-127.0.0.1}:8080/"
-echo "Admin:         http://${IP:-127.0.0.1}:8080/admin"
-echo "Pinkod vid första start: 1234"
-echo "SSH:           ssh $USER@${IP:-IP-ADRESS}"
+echo "Klart. Kassan öppnas mot GitHub Pages (ingen lokal webserver)."
+echo "URL: ${LOCAL_RETAIL_URL:-https://vkc276.github.io/LocalRetail/?kiosk=1}"
+echo "SSH: ssh $USER@${IP:-IP-ADRESS}"
 echo
 echo "Vid nästa inloggning/omstart öppnas kassan i kioskläge."
 echo "Sätt automatisk inloggning för den här användaren så kiosken startar av sig själv."

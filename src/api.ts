@@ -6,6 +6,8 @@ export type Product = {
   icon?: string | null;
   featured?: boolean;
   imageUrl: string | null;
+  imageHash?: string;
+  imageKey?: string;
   active?: boolean;
   sort?: number;
 };
@@ -15,9 +17,12 @@ export type CartItem = Product & { qty: number };
 export type Theme = "light" | "dark" | "bold" | "contrast";
 
 export type Catalog = {
+  revision?: number;
   shopName: string;
   theme?: Theme;
   logoUrl?: string | null;
+  logoHash?: string | null;
+  swishNumber?: string;
   swishConfigured: boolean;
   categories: string[];
   products: Product[];
@@ -31,55 +36,40 @@ export type CheckoutResult = {
   items: Array<{ id: string; name: string; price: number; qty: number }>;
 };
 
-export type SalesReport = {
-  from: string;
-  to: string;
-  orderCount: number;
-  itemCount: number;
-  totalAmount: number;
-  categories: Array<{
-    category: string;
-    qty: number;
-    amount: number;
-    products: Array<{ id: string; name: string; category: string; qty: number; amount: number }>;
-  }>;
-};
+export const WALLFLOW_URL = String(import.meta.env.VITE_WALLFLOW_URL ?? "https://wallflow.muddy-rice-38d4.workers.dev").replace(
+  /\/$/,
+  "",
+);
 
-export const API_BASE = String(import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+export const CATALOG_POLL_MS = 5 * 60 * 1000;
 
-export function apiUrl(path: string) {
-  return `${API_BASE}${path}`;
+export async function fetchCatalogRevision() {
+  const res = await fetch(`${WALLFLOW_URL}/kiosk/revision`, { cache: "no-store" });
+  const data = (await res.json()) as { ok?: boolean; revision?: number; error?: string };
+  if (!res.ok || data.ok === false) throw new Error(data.error || "Kunde inte läsa katalogversion");
+  return Number(data.revision) || 0;
 }
 
-export function mediaUrl(path: string | null | undefined) {
-  if (!path) return null;
-  if (/^https?:\/\//i.test(path) || path.startsWith("blob:") || path.startsWith("data:")) return path;
-  return apiUrl(path);
-}
-
-export async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const { headers, ...rest } = init ?? {};
-  const res = await fetch(apiUrl(path), {
-    credentials: "include",
-    ...rest,
-    headers: {
-      ...(init?.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
-      ...headers,
-    },
-  });
-  const data = (await res.json().catch(() => ({}))) as T & { error?: string };
-  if (!res.ok) throw new Error(data.error || "Något gick fel");
+export async function fetchCatalog() {
+  const res = await fetch(`${WALLFLOW_URL}/kiosk/catalog`, { cache: "no-store" });
+  const data = (await res.json()) as Catalog & { ok?: boolean; error?: string };
+  if (!res.ok || data.ok === false) throw new Error(data.error || "Kunde inte hämta katalogen");
   return data;
 }
 
-export async function downloadApi(path: string, filename: string) {
-  const res = await fetch(apiUrl(path), { credentials: "include" });
-  if (!res.ok) throw new Error("Kunde inte hämta filen");
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
+export async function recordKioskSale(payload: {
+  orderId: string;
+  amount: number;
+  message: string;
+  items: Array<{ id: string; name: string; price: number; qty: number }>;
+}) {
+  try {
+    await fetch(WALLFLOW_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain; charset=UTF-8" },
+      body: JSON.stringify({ action: "recordKioskSale", token: "", args: [payload] }),
+    });
+  } catch {
+    /* kassan ska kunna visa Swish även om loggning misslyckas */
+  }
 }
