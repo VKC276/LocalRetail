@@ -373,7 +373,7 @@ export default function Kiosk() {
               <button type="button" className="primary pay-btn" onClick={() => markPaid(checkout)}>
                 Jag har betalat
               </button>
-              <button type="button" className="ghost checkout-cancel" onClick={cancelCheckout}>
+              <button type="button" className="checkout-cancel" onClick={cancelCheckout}>
                 Avbryt
               </button>
             </div>

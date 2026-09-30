@@ -508,7 +508,8 @@ p {
 .qty button,
 .icon-btn,
 .primary,
-.ghost {
+.ghost,
+.checkout-cancel {
   min-height: 52px;
   min-width: 52px;
   border-radius: 10px;
@@ -753,19 +754,26 @@ p {
 .checkout-actions {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 28px;
   margin-top: 8px;
 }
 
-.checkout-actions .pay-btn {
+.checkout-actions .pay-btn,
+.checkout-cancel {
   width: 100%;
   min-height: 56px;
 }
 
 .checkout-cancel {
-  width: 100%;
-  color: var(--ink);
-  font-size: 18px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.kiosk.theme-dark .checkout-cancel,
+.kiosk.theme-bold .checkout-cancel {
+  color: #2a0808;
 }
 
 .idle-warn {
