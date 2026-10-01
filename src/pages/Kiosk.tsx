@@ -13,7 +13,7 @@ const PAYMENT_TIMEOUT_MS = 2 * 60 * 1000;
 const SEARCH_IDLE_MS = 2 * 60 * 1000;
 const CART_IDLE_MS = 5 * 60 * 1000;
 const CART_WARN_MS = 60 * 1000;
-const HOME_IDLE_MS = 2 * 60 * 1000;
+const HOME_IDLE_MS = 5 * 60 * 1000;
 
 type KioskView = "home" | "swish";
 type LinkOverlay = EntryPage | null;
@@ -294,9 +294,7 @@ export default function Kiosk() {
     const tick = () => {
       const remaining = CART_IDLE_MS - (Date.now() - lastActivity.current);
       if (remaining <= 0) {
-        setCart([]);
-        clearSearch();
-        setIdleLeftMs(null);
+        goHome();
         return;
       }
       setIdleLeftMs(remaining <= CART_WARN_MS ? remaining : null);
