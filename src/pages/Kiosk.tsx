@@ -94,7 +94,7 @@ export default function Kiosk() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [paying, setPaying] = useState(false);
   const [checkout, setCheckout] = useState<CheckoutResult | null>(null);
-  const [thankYou, setThankYou] = useState(false);
+  const [thankYou, setThankYou] = useState<"in" | "out" | null>(null);
   const [payLeftMs, setPayLeftMs] = useState<number | null>(null);
   const [idleLeftMs, setIdleLeftMs] = useState<number | null>(null);
   const [flyers, setFlyers] = useState<Flyer[]>([]);
@@ -279,11 +279,12 @@ export default function Kiosk() {
     void recordKioskSale(sale);
     setCheckout(null);
     setPayLeftMs(null);
-    setThankYou(true);
+    setThankYou("in");
+    window.setTimeout(() => setThankYou("out"), 1400);
     window.setTimeout(() => {
-      setThankYou(false);
+      setThankYou(null);
       goHome();
-    }, 1800);
+    }, 1900);
   };
 
   const cancelCheckout = () => {
@@ -370,7 +371,7 @@ export default function Kiosk() {
   if (thankYou) {
     return (
       <div className={`kiosk ${kioskDisplay ? "kiosk-display" : ""} theme-${themeClass}`}>
-        <div className="checkout">
+        <div className={`checkout thank-you-scrim ${thankYou === "out" ? "is-out" : ""}`}>
           <div className="checkout-card thank-you-card">
             <h2>Tack för din betalning</h2>
           </div>

@@ -944,13 +944,66 @@ p {
   line-height: 1.3;
 }
 
+.thank-you-scrim {
+  animation: thank-you-fade-in 0.45s ease both;
+}
+
+.thank-you-scrim.is-out {
+  animation: thank-you-fade-out 0.45s ease both;
+}
+
 .thank-you-card {
   padding: 48px 40px;
+  animation: thank-you-card-in 0.5s ease both;
+}
+
+.thank-you-scrim.is-out .thank-you-card {
+  animation: thank-you-card-out 0.45s ease both;
 }
 
 .thank-you-card h2 {
   margin: 0;
   font-size: clamp(28px, 4vw, 40px);
+}
+
+@keyframes thank-you-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes thank-you-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes thank-you-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes thank-you-card-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
 }
 
 .checkout-timeout {
