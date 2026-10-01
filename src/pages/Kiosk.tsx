@@ -437,16 +437,10 @@ export default function Kiosk() {
     <div className={`kiosk ${kioskDisplay ? "kiosk-display" : ""} theme-${themeClass}`} onPointerDown={bumpActivity}>
       <header className="kiosk-top">
         <div className="kiosk-head">
-          <div className="brand">
-            <div className="brand-mark">{catalog?.logoUrl ? <img src={catalog.logoUrl} alt="" /> : null}</div>
-            <div>
-              <h1>{catalog?.shopName ?? "Självbetjäning"}</h1>
-              <p>Tryck på produkten. Betala med Swish när du är klar.</p>
-            </div>
-          </div>
-          <button type="button" className="ghost home-back" onClick={goHome}>
-            Start
+          <button type="button" className="ghost home-back" onClick={goHome} aria-label="Tillbaka till startsidan">
+            ←
           </button>
+          <p className="kiosk-swish-hint">Tryck på produkten. Betala med Swish när du är klar.</p>
         </div>
         <div className={`search-field ${query ? "" : "empty"} ${keyboardOpen ? "active" : ""}`}>
           <button type="button" className="search-field-main" onClick={() => setKeyboardOpen(true)}>
