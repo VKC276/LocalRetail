@@ -107,11 +107,6 @@ p {
   margin: 0 auto;
 }
 
-.home-error {
-  text-align: center;
-  margin: 0;
-}
-
 .home-actions {
   display: flex;
   flex-direction: column;

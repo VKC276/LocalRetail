@@ -53,7 +53,6 @@ export default function Kiosk() {
   const [searchParams] = useSearchParams();
   const kioskDisplay = searchParams.has("kiosk");
   const [catalog, setCatalog] = useState<Catalog | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<KioskView>("home");
   const [linkOverlay, setLinkOverlay] = useState<LinkOverlay>(null);
   const [query, setQuery] = useState("");
@@ -90,16 +89,10 @@ export default function Kiosk() {
         if (!force && localRev != null && remoteRev === localRev) return;
         const data = await fetchCatalog();
         await applyCatalog(data);
-        if (!cancelled) setError(null);
-      } catch (err) {
+      } catch {
         if (cancelled) return;
         const cached = await readCachedCatalog();
-        if (cached) {
-          setCatalog(await withLocalImages(cached));
-          setError(null);
-        } else {
-          setError(err instanceof Error ? err.message : "Kunde inte hämta katalogen");
-        }
+        if (cached) setCatalog(await withLocalImages(cached));
       }
     };
     void (async () => {
@@ -181,26 +174,22 @@ export default function Kiosk() {
   const pay = async () => {
     bumpActivity();
     setPaying(true);
-    setError(null);
     try {
       const payee = String(catalog?.swishNumber || "").replace(/\s+/g, "");
-      if (!payee) throw new Error("Swish-nummer saknas. Lägg till det i WallFlow.");
+      if (!payee) return;
       const lines = cart.map((item) => ({ id: item.id, name: item.name, price: item.price, qty: item.qty }));
       const amount = Math.round(lines.reduce((sum, item) => sum + item.price * item.qty, 0) * 100) / 100;
-      if (amount < 1) throw new Error("Beloppet måste vara minst 1 kr");
+      if (amount < 1) return;
       const orderId = crypto.randomUUID().slice(0, 8).toUpperCase();
       const message = orderId;
-      const result = {
+      setCheckout({
         orderId,
         amount,
         message,
         qrDataUrl: swishQrDataUrl(payee, amount, message),
         items: lines,
-      };
-      setCheckout(result);
+      });
       checkoutSettled.current = false;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Kunde inte skapa Swish-QR");
     } finally {
       setPaying(false);
     }
@@ -234,11 +223,7 @@ export default function Kiosk() {
   const openLinkOverlay = (page: EntryPage | undefined, fallbackTitle: string) => {
     bumpActivity();
     const url = String(page?.url || "").trim();
-    if (!url) {
-      setError(`${fallbackTitle} saknar QR-adress. Lägg till den i WallFlow under Självbetjäningskassa.`);
-      return;
-    }
-    setError(null);
+    if (!url) return;
     setLinkOverlay({
       title: String(page?.title || fallbackTitle).trim() || fallbackTitle,
       body: String(page?.body || "").trim(),
@@ -350,7 +335,6 @@ export default function Kiosk() {
             <h1>{catalog?.shopName ?? "Självbetjäning"}</h1>
             <p>Välj hur du vill fortsätta</p>
           </div>
-          {error ? <p className="error home-error">{error}</p> : null}
           <div className="home-actions">
             <button type="button" className="home-btn home-btn-member" onClick={() => openLinkOverlay(catalog?.memberPage, "Bli medlem")}>
               Bli medlem
@@ -431,7 +415,6 @@ export default function Kiosk() {
             </button>
           ))}
         </div>
-        {error ? <p className="error">{error}</p> : null}
       </header>
 
       <div className="grid-wrap">
