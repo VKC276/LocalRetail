@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { CATALOG_POLL_MS, fetchCatalog, fetchCatalogRevision, recordKioskSale, type CartItem, type Catalog, type CheckoutResult, type EntryPage, type HomeSlot, type Product } from "../api";
+import { CATALOG_POLL_MS, fetchCatalog, fetchCatalogRevision, recordKioskSale, type CartItem, type Catalog, type CheckoutResult, type EntryPage, type HomeQrButton, type Product } from "../api";
 import { readCachedCatalog, readCachedRevision, withLocalImages, writeCachedCatalog } from "../catalogCache";
 import { swishQrDataUrl } from "../swishQr";
 import { textQrDataUrl } from "../infoQr";
 import CartPanel from "../components/CartPanel";
 import ProductTile from "../components/ProductTile";
 import VirtualKeyboard from "../components/VirtualKeyboard";
+import { formatSek } from "../format";
 import { useDragScroll } from "../useDragScroll";
 
 const PAYMENT_TIMEOUT_MS = 2 * 60 * 1000;
@@ -49,21 +50,31 @@ function formatPayCountdown(ms: number) {
   return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
 }
 
-const DEFAULT_HOME_ORDER: HomeSlot[] = ["member", "epassi", "swish"];
+const QR_BTN_CLASSES = ["home-btn-member", "home-btn-epassi", "home-btn-qr-c", "home-btn-qr-d"];
 
-function homeButtonOrder(order: HomeSlot[] | undefined): HomeSlot[] {
-  const allowed = new Set<HomeSlot>(DEFAULT_HOME_ORDER);
-  const out: HomeSlot[] = [];
-  const seen = new Set<HomeSlot>();
-  for (const item of order || []) {
-    if (!allowed.has(item) || seen.has(item)) continue;
-    seen.add(item);
-    out.push(item);
+function homeSlots(catalog: Catalog | null): string[] {
+  const buttons = catalog?.homeQrButtons || [];
+  const ids = new Set(buttons.map((b) => b.id));
+  ids.add("swish");
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const slot of catalog?.homeOrder || []) {
+    if (!ids.has(slot) || seen.has(slot)) continue;
+    seen.add(slot);
+    out.push(slot);
   }
-  for (const slot of DEFAULT_HOME_ORDER) {
-    if (!seen.has(slot)) out.push(slot);
+  for (const btn of buttons) {
+    if (!seen.has(btn.id)) {
+      seen.add(btn.id);
+      out.push(btn.id);
+    }
   }
+  if (!seen.has("swish")) out.push("swish");
   return out;
+}
+
+function qrButtonById(catalog: Catalog | null, id: string): HomeQrButton | undefined {
+  return (catalog?.homeQrButtons || []).find((b) => b.id === id);
 }
 
 export default function Kiosk() {
@@ -345,8 +356,14 @@ export default function Kiosk() {
     catalog?.theme === "dark" || catalog?.theme === "bold" || catalog?.theme === "contrast" ? catalog.theme : "light";
 
   if (view === "home") {
+    const homeBg = String(catalog?.homeBackgroundUrl || "").trim();
+    let qrIndex = 0;
     return (
-      <div className={`kiosk kiosk-home ${kioskDisplay ? "kiosk-display" : ""} theme-${themeClass}`} onPointerDown={bumpActivity}>
+      <div
+        className={`kiosk kiosk-home ${homeBg ? "has-home-bg" : ""} ${kioskDisplay ? "kiosk-display" : ""} theme-${themeClass}`}
+        style={homeBg ? { backgroundImage: `url(${homeBg})` } : undefined}
+        onPointerDown={bumpActivity}
+      >
         <div className="home-panel">
           <div className="home-brand">
             <div className="brand-mark home-logo">{catalog?.logoUrl ? <img src={catalog.logoUrl} alt="" /> : null}</div>
@@ -354,24 +371,24 @@ export default function Kiosk() {
             <p>Välj hur du vill fortsätta</p>
           </div>
           <div className="home-actions">
-            {homeButtonOrder(catalog?.homeOrder).map((slot) => {
-              if (slot === "member") {
+            {homeSlots(catalog).map((slot) => {
+              if (slot === "swish") {
                 return (
-                  <button key={slot} type="button" className="home-btn home-btn-member" onClick={() => openLinkOverlay(catalog?.memberPage, "Bli medlem")}>
-                    {String(catalog?.memberPage?.title || "").trim() || "Bli medlem"}
+                  <button key={slot} type="button" className="home-btn home-btn-swish" onClick={openSwishCatalog}>
+                    Betala med Swish
                   </button>
                 );
               }
-              if (slot === "epassi") {
-                return (
-                  <button key={slot} type="button" className="home-btn home-btn-epassi" onClick={() => openLinkOverlay(catalog?.epassiPage, "Betala med Epassi")}>
-                    {String(catalog?.epassiPage?.title || "").trim() || "Betala med Epassi"}
-                  </button>
-                );
-              }
+              const page = qrButtonById(catalog, slot);
+              const colorClass = QR_BTN_CLASSES[qrIndex++ % QR_BTN_CLASSES.length];
               return (
-                <button key={slot} type="button" className="home-btn home-btn-swish" onClick={openSwishCatalog}>
-                  Betala med Swish
+                <button
+                  key={slot}
+                  type="button"
+                  className={`home-btn ${colorClass}`}
+                  onClick={() => openLinkOverlay(page, page?.title || "QR")}
+                >
+                  {String(page?.title || "").trim() || "QR"}
                 </button>
               );
             })}

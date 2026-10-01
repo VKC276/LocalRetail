@@ -23,7 +23,7 @@ export type EntryPage = {
   logoUrl?: string | null;
 };
 
-export type HomeSlot = "member" | "epassi" | "swish";
+export type HomeQrButton = EntryPage & { id: string };
 
 export type Catalog = {
   revision?: number;
@@ -33,7 +33,9 @@ export type Catalog = {
   logoHash?: string | null;
   swishNumber?: string;
   swishConfigured: boolean;
-  homeOrder?: HomeSlot[];
+  homeOrder?: string[];
+  homeQrButtons?: HomeQrButton[];
+  homeBackgroundUrl?: string | null;
   memberPage?: EntryPage;
   epassiPage?: EntryPage;
   categories: string[];
