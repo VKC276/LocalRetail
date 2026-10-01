@@ -337,10 +337,10 @@ export default function Kiosk() {
           </div>
           <div className="home-actions">
             <button type="button" className="home-btn home-btn-member" onClick={() => openLinkOverlay(catalog?.memberPage, "Bli medlem")}>
-              Bli medlem
+              {String(catalog?.memberPage?.title || "").trim() || "Bli medlem"}
             </button>
             <button type="button" className="home-btn home-btn-epassi" onClick={() => openLinkOverlay(catalog?.epassiPage, "Betala med Epassi")}>
-              Betala med Epassi
+              {String(catalog?.epassiPage?.title || "").trim() || "Betala med Epassi"}
             </button>
             <button type="button" className="home-btn home-btn-swish" onClick={openSwishCatalog}>
               Betala med Swish
