@@ -16,6 +16,13 @@ export type CartItem = Product & { qty: number };
 
 export type Theme = "light" | "dark" | "bold" | "contrast";
 
+export type EntryPage = {
+  title: string;
+  body: string;
+  url: string;
+  logoUrl?: string | null;
+};
+
 export type Catalog = {
   revision?: number;
   shopName: string;
@@ -24,6 +31,8 @@ export type Catalog = {
   logoHash?: string | null;
   swishNumber?: string;
   swishConfigured: boolean;
+  memberPage?: EntryPage;
+  epassiPage?: EntryPage;
   categories: string[];
   products: Product[];
 };

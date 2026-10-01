@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { CATALOG_POLL_MS, fetchCatalog, fetchCatalogRevision, recordKioskSale, type CartItem, type Catalog, type CheckoutResult, type Product } from "../api";
+import { CATALOG_POLL_MS, fetchCatalog, fetchCatalogRevision, recordKioskSale, type CartItem, type Catalog, type CheckoutResult, type EntryPage, type Product } from "../api";
 import { readCachedCatalog, readCachedRevision, withLocalImages, writeCachedCatalog } from "../catalogCache";
 import { swishQrDataUrl } from "../swishQr";
+import { textQrDataUrl } from "../infoQr";
 import CartPanel from "../components/CartPanel";
 import ProductTile from "../components/ProductTile";
 import VirtualKeyboard from "../components/VirtualKeyboard";
@@ -12,6 +13,10 @@ const PAYMENT_TIMEOUT_MS = 2 * 60 * 1000;
 const SEARCH_IDLE_MS = 2 * 60 * 1000;
 const CART_IDLE_MS = 5 * 60 * 1000;
 const CART_WARN_MS = 60 * 1000;
+const HOME_IDLE_MS = 2 * 60 * 1000;
+
+type KioskView = "home" | "swish";
+type LinkOverlay = EntryPage | null;
 
 type Flyer = {
   key: number;
@@ -49,6 +54,8 @@ export default function Kiosk() {
   const kioskDisplay = searchParams.has("kiosk");
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [view, setView] = useState<KioskView>("home");
+  const [linkOverlay, setLinkOverlay] = useState<LinkOverlay>(null);
   const [query, setQuery] = useState("");
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const [category, setCategory] = useState<string>("Alla");
@@ -204,14 +211,44 @@ export default function Kiosk() {
     setKeyboardOpen(false);
   };
 
-  const reset = () => {
+  const goHome = () => {
+    setView("home");
+    setLinkOverlay(null);
     setCart([]);
     setCheckout(null);
     setPayLeftMs(null);
     clearSearch();
     setCategory("Alla");
     setIdleLeftMs(null);
+    setPulseId(null);
+    setFlyers([]);
     lastActivity.current = Date.now();
+  };
+
+  const openSwishCatalog = () => {
+    bumpActivity();
+    setLinkOverlay(null);
+    setView("swish");
+  };
+
+  const openLinkOverlay = (page: EntryPage | undefined, fallbackTitle: string) => {
+    bumpActivity();
+    const url = String(page?.url || "").trim();
+    if (!url) {
+      setError(`${fallbackTitle} saknar QR-adress. Lägg till den i WallFlow under Självbetjäningskassa.`);
+      return;
+    }
+    setError(null);
+    setLinkOverlay({
+      title: String(page?.title || fallbackTitle).trim() || fallbackTitle,
+      body: String(page?.body || "").trim(),
+      url,
+      logoUrl: page?.logoUrl || null,
+    });
+  };
+
+  const reset = () => {
+    goHome();
   };
 
   const markPaid = (sale: CheckoutResult) => {
@@ -278,11 +315,84 @@ export default function Kiosk() {
     return () => window.clearInterval(timer);
   }, [query, keyboardOpen, checkout]);
 
+  useEffect(() => {
+    if (view !== "swish" || cart.length > 0 || checkout || linkOverlay) return;
+    const tick = () => {
+      if (Date.now() - lastActivity.current < HOME_IDLE_MS) return;
+      goHome();
+    };
+    tick();
+    const timer = window.setInterval(tick, 1000);
+    return () => window.clearInterval(timer);
+  }, [view, cart.length, checkout, linkOverlay]);
+
+  useEffect(() => {
+    if (!linkOverlay) return;
+    const tick = () => {
+      if (Date.now() - lastActivity.current < HOME_IDLE_MS) return;
+      setLinkOverlay(null);
+      setView("home");
+    };
+    tick();
+    const timer = window.setInterval(tick, 1000);
+    return () => window.clearInterval(timer);
+  }, [linkOverlay]);
+
+  const themeClass =
+    catalog?.theme === "dark" || catalog?.theme === "bold" || catalog?.theme === "contrast" ? catalog.theme : "light";
+
+  if (view === "home") {
+    return (
+      <div className={`kiosk kiosk-home ${kioskDisplay ? "kiosk-display" : ""} theme-${themeClass}`} onPointerDown={bumpActivity}>
+        <div className="home-panel">
+          <div className="home-brand">
+            <div className="brand-mark home-logo">{catalog?.logoUrl ? <img src={catalog.logoUrl} alt="" /> : null}</div>
+            <h1>{catalog?.shopName ?? "Självbetjäning"}</h1>
+            <p>Välj hur du vill fortsätta</p>
+          </div>
+          {error ? <p className="error home-error">{error}</p> : null}
+          <div className="home-actions">
+            <button type="button" className="home-btn home-btn-member" onClick={() => openLinkOverlay(catalog?.memberPage, "Bli medlem")}>
+              Bli medlem
+            </button>
+            <button type="button" className="home-btn home-btn-epassi" onClick={() => openLinkOverlay(catalog?.epassiPage, "Betala med Epassi")}>
+              Betala med Epassi
+            </button>
+            <button type="button" className="home-btn home-btn-swish" onClick={openSwishCatalog}>
+              Betala med Swish
+            </button>
+          </div>
+        </div>
+        {linkOverlay ? (
+          <div className="checkout">
+            <div className="checkout-card info-card">
+              {linkOverlay.logoUrl ? (
+                <div className="info-logo">
+                  <img src={linkOverlay.logoUrl} alt="" />
+                </div>
+              ) : null}
+              <h2>{linkOverlay.title}</h2>
+              <img src={textQrDataUrl(linkOverlay.url)} alt="QR-kod" className="info-qr" />
+              {linkOverlay.body ? <p className="info-body">{linkOverlay.body}</p> : null}
+              <button
+                type="button"
+                className="primary pay-btn"
+                onClick={() => {
+                  bumpActivity();
+                  setLinkOverlay(null);
+                }}
+              >
+                Tillbaka
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={`kiosk ${kioskDisplay ? "kiosk-display" : ""} theme-${catalog?.theme === "dark" || catalog?.theme === "bold" || catalog?.theme === "contrast" ? catalog.theme : "light"}`}
-      onPointerDown={bumpActivity}
-    >
+    <div className={`kiosk ${kioskDisplay ? "kiosk-display" : ""} theme-${themeClass}`} onPointerDown={bumpActivity}>
       <header className="kiosk-top">
         <div className="kiosk-head">
           <div className="brand">
@@ -292,6 +402,9 @@ export default function Kiosk() {
               <p>Tryck på produkten. Betala med Swish när du är klar.</p>
             </div>
           </div>
+          <button type="button" className="ghost home-back" onClick={goHome}>
+            Start
+          </button>
         </div>
         <div className={`search-field ${query ? "" : "empty"} ${keyboardOpen ? "active" : ""}`}>
           <button type="button" className="search-field-main" onClick={() => setKeyboardOpen(true)}>
