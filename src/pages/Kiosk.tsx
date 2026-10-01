@@ -280,11 +280,11 @@ export default function Kiosk() {
     setCheckout(null);
     setPayLeftMs(null);
     setThankYou("in");
-    window.setTimeout(() => setThankYou("out"), 1400);
+    window.setTimeout(() => setThankYou("out"), 2400);
     window.setTimeout(() => {
       setThankYou(null);
       goHome();
-    }, 1900);
+    }, 2900);
   };
 
   const cancelCheckout = () => {
