@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { CATALOG_POLL_MS, fetchCatalog, fetchCatalogRevision, recordKioskSale, type CartItem, type Catalog, type CheckoutResult, type EntryPage, type Product } from "../api";
+import { CATALOG_POLL_MS, fetchCatalog, fetchCatalogRevision, recordKioskSale, type CartItem, type Catalog, type CheckoutResult, type EntryPage, type HomeSlot, type Product } from "../api";
 import { readCachedCatalog, readCachedRevision, withLocalImages, writeCachedCatalog } from "../catalogCache";
 import { swishQrDataUrl } from "../swishQr";
 import { textQrDataUrl } from "../infoQr";
@@ -47,6 +47,23 @@ function flyArcPath(dx: number, dy: number) {
 function formatPayCountdown(ms: number) {
   const sec = Math.max(0, Math.ceil(ms / 1000));
   return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
+}
+
+const DEFAULT_HOME_ORDER: HomeSlot[] = ["member", "epassi", "swish"];
+
+function homeButtonOrder(order: HomeSlot[] | undefined): HomeSlot[] {
+  const allowed = new Set<HomeSlot>(DEFAULT_HOME_ORDER);
+  const out: HomeSlot[] = [];
+  const seen = new Set<HomeSlot>();
+  for (const item of order || []) {
+    if (!allowed.has(item) || seen.has(item)) continue;
+    seen.add(item);
+    out.push(item);
+  }
+  for (const slot of DEFAULT_HOME_ORDER) {
+    if (!seen.has(slot)) out.push(slot);
+  }
+  return out;
 }
 
 export default function Kiosk() {
@@ -336,15 +353,27 @@ export default function Kiosk() {
             <p>Välj hur du vill fortsätta</p>
           </div>
           <div className="home-actions">
-            <button type="button" className="home-btn home-btn-member" onClick={() => openLinkOverlay(catalog?.memberPage, "Bli medlem")}>
-              {String(catalog?.memberPage?.title || "").trim() || "Bli medlem"}
-            </button>
-            <button type="button" className="home-btn home-btn-epassi" onClick={() => openLinkOverlay(catalog?.epassiPage, "Betala med Epassi")}>
-              {String(catalog?.epassiPage?.title || "").trim() || "Betala med Epassi"}
-            </button>
-            <button type="button" className="home-btn home-btn-swish" onClick={openSwishCatalog}>
-              Betala med Swish
-            </button>
+            {homeButtonOrder(catalog?.homeOrder).map((slot) => {
+              if (slot === "member") {
+                return (
+                  <button key={slot} type="button" className="home-btn home-btn-member" onClick={() => openLinkOverlay(catalog?.memberPage, "Bli medlem")}>
+                    {String(catalog?.memberPage?.title || "").trim() || "Bli medlem"}
+                  </button>
+                );
+              }
+              if (slot === "epassi") {
+                return (
+                  <button key={slot} type="button" className="home-btn home-btn-epassi" onClick={() => openLinkOverlay(catalog?.epassiPage, "Betala med Epassi")}>
+                    {String(catalog?.epassiPage?.title || "").trim() || "Betala med Epassi"}
+                  </button>
+                );
+              }
+              return (
+                <button key={slot} type="button" className="home-btn home-btn-swish" onClick={openSwishCatalog}>
+                  Betala med Swish
+                </button>
+              );
+            })}
           </div>
         </div>
         {linkOverlay ? (
