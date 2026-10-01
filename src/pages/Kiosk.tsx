@@ -438,7 +438,7 @@ export default function Kiosk() {
       <header className="kiosk-top">
         <div className="kiosk-head">
           <button type="button" className="ghost home-back" onClick={goHome} aria-label="Tillbaka till startsidan">
-            ←
+            Tillbaka till startsidan
           </button>
           <p className="kiosk-swish-hint">Tryck på produkten. Betala med Swish när du är klar.</p>
         </div>
