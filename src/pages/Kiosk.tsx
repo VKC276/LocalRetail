@@ -7,7 +7,7 @@ import { textQrDataUrl } from "../infoQr";
 import CartPanel from "../components/CartPanel";
 import ProductTile from "../components/ProductTile";
 import VirtualKeyboard from "../components/VirtualKeyboard";
-import { formatSek } from "../format";
+import { useDragScroll } from "../useDragScroll";
 
 const PAYMENT_TIMEOUT_MS = 2 * 60 * 1000;
 const SEARCH_IDLE_MS = 2 * 60 * 1000;
@@ -84,6 +84,7 @@ export default function Kiosk() {
   const [pulseId, setPulseId] = useState<string | null>(null);
   const lastActivity = useRef(Date.now());
   const cartRef = useRef<HTMLElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
   const flyerSeq = useRef(0);
   const checkoutSettled = useRef(false);
 
@@ -91,6 +92,8 @@ export default function Kiosk() {
     lastActivity.current = Date.now();
     setIdleLeftMs(null);
   };
+
+  useDragScroll(gridRef, bumpActivity);
 
   useEffect(() => {
     let cancelled = false;
@@ -444,7 +447,7 @@ export default function Kiosk() {
         </div>
       </header>
 
-      <div className="grid-wrap">
+      <div className="grid-wrap" ref={gridRef}>
         {featured.length > 0 ? (
           <section className="featured-block">
             <h2>Vanliga val</h2>
