@@ -23,7 +23,7 @@ export type EntryPage = {
   logoUrl?: string | null;
 };
 
-export type HomeQrButton = EntryPage & { id: string };
+export type HomeQrButton = EntryPage & { id: string; color?: string };
 
 export type Catalog = {
   revision?: number;
@@ -33,6 +33,7 @@ export type Catalog = {
   logoHash?: string | null;
   swishNumber?: string;
   swishConfigured: boolean;
+  swishButtonColor?: string;
   homeOrder?: string[];
   homeQrButtons?: HomeQrButton[];
   homeBackgroundUrl?: string | null;

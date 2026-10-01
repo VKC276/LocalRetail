@@ -50,7 +50,7 @@ function formatPayCountdown(ms: number) {
   return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
 }
 
-const QR_BTN_CLASSES = ["home-btn-member", "home-btn-epassi", "home-btn-qr-c", "home-btn-qr-d"];
+const DEFAULT_QR_COLORS = ["#1f6f8b", "#c45c26", "#2f6b3a", "#5b4b8a"];
 
 function homeSlots(catalog: Catalog | null): string[] {
   const buttons = catalog?.homeQrButtons || [];
@@ -75,6 +75,11 @@ function homeSlots(catalog: Catalog | null): string[] {
 
 function qrButtonById(catalog: Catalog | null, id: string): HomeQrButton | undefined {
   return (catalog?.homeQrButtons || []).find((b) => b.id === id);
+}
+
+function buttonColor(color: string | undefined, fallback: string) {
+  const value = String(color || "").trim();
+  return /^#[0-9a-fA-F]{6}$/.test(value) ? value : fallback;
 }
 
 export default function Kiosk() {
@@ -357,7 +362,6 @@ export default function Kiosk() {
 
   if (view === "home") {
     const homeBg = String(catalog?.homeBackgroundUrl || "").trim();
-    let qrIndex = 0;
     return (
       <div
         className={`kiosk kiosk-home ${homeBg ? "has-home-bg" : ""} ${kioskDisplay ? "kiosk-display" : ""} theme-${themeClass}`}
@@ -371,21 +375,28 @@ export default function Kiosk() {
             <p>Välj hur du vill fortsätta</p>
           </div>
           <div className="home-actions">
-            {homeSlots(catalog).map((slot) => {
+            {homeSlots(catalog).map((slot, index) => {
               if (slot === "swish") {
                 return (
-                  <button key={slot} type="button" className="home-btn home-btn-swish" onClick={openSwishCatalog}>
+                  <button
+                    key={slot}
+                    type="button"
+                    className="home-btn home-btn-swish"
+                    style={{ backgroundColor: buttonColor(catalog?.swishButtonColor, "#1a9f4b") }}
+                    onClick={openSwishCatalog}
+                  >
                     Betala med Swish
                   </button>
                 );
               }
               const page = qrButtonById(catalog, slot);
-              const colorClass = QR_BTN_CLASSES[qrIndex++ % QR_BTN_CLASSES.length];
+              const fallback = DEFAULT_QR_COLORS[index % DEFAULT_QR_COLORS.length];
               return (
                 <button
                   key={slot}
                   type="button"
-                  className={`home-btn ${colorClass}`}
+                  className="home-btn"
+                  style={{ backgroundColor: buttonColor(page?.color, fallback) }}
                   onClick={() => openLinkOverlay(page, page?.title || "QR")}
                 >
                   {String(page?.title || "").trim() || "QR"}
