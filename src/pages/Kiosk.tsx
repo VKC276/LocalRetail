@@ -94,6 +94,7 @@ export default function Kiosk() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [paying, setPaying] = useState(false);
   const [checkout, setCheckout] = useState<CheckoutResult | null>(null);
+  const [thankYou, setThankYou] = useState(false);
   const [payLeftMs, setPayLeftMs] = useState<number | null>(null);
   const [idleLeftMs, setIdleLeftMs] = useState<number | null>(null);
   const [flyers, setFlyers] = useState<Flyer[]>([]);
@@ -276,7 +277,13 @@ export default function Kiosk() {
     if (checkoutSettled.current) return;
     checkoutSettled.current = true;
     void recordKioskSale(sale);
-    reset();
+    setCheckout(null);
+    setPayLeftMs(null);
+    setThankYou(true);
+    window.setTimeout(() => {
+      setThankYou(false);
+      goHome();
+    }, 1800);
   };
 
   const cancelCheckout = () => {
@@ -359,6 +366,18 @@ export default function Kiosk() {
 
   const themeClass =
     catalog?.theme === "dark" || catalog?.theme === "bold" || catalog?.theme === "contrast" ? catalog.theme : "light";
+
+  if (thankYou) {
+    return (
+      <div className={`kiosk ${kioskDisplay ? "kiosk-display" : ""} theme-${themeClass}`}>
+        <div className="checkout">
+          <div className="checkout-card thank-you-card">
+            <h2>Tack för din betalning</h2>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (view === "home") {
     const homeBg = String(catalog?.homeBackgroundUrl || "").trim();
