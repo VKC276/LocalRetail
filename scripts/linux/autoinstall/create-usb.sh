@@ -169,6 +169,14 @@ sleep 1
 PART1="$(part_path "$DISK" 1)"
 [[ -b "$PART1" ]] || die "Hittar inte partition $PART1 efter Ventoy-install"
 
+# Ventoy must expose EFI/boot partition (usually p2 named VTOYEFI)
+PART2="$(part_path "$DISK" 2)"
+if [[ ! -b "$PART2" ]]; then
+  die "Ventoy verkar inte installerat ratt (saknar partition 2 / VTOYEFI). Kor om create-usb.sh."
+fi
+info "Ventoy-partitioner OK: $PART1 (data) + $PART2 (EFI)"
+lsblk -o NAME,SIZE,LABEL,FSTYPE "$DISK" || true
+
 MNT="$OUT/mnt-ventoy"
 mkdir -p "$MNT"
 info "Monterar $PART1"
