@@ -22,17 +22,15 @@ npx wrangler deploy
 
 Publicera WallFlow-frontenden som vanligt (`index.html` + `kiosk-catalog.js`).
 
-## Linux-kiosk
+## Linux-kiosk (Lubuntu)
 
-Manuellt på en befintlig Ubuntu:
+Kassan körs på **Lubuntu** (manuell install). Se [`scripts/linux/README.md`](scripts/linux/README.md).
 
 ```bash
 bash scripts/linux/install.sh
 ```
 
-**Obevaktad install från Windows (USB):** se [`scripts/linux/autoinstall/README.md`](scripts/linux/autoinstall/README.md) — kör `prepare-usb.ps1`, lägg ISO:erna på en Ventoy-USB.
-
-Öppnar GitHub Pages i Chromium kioskläge. SSH-server installeras; ingen lokal webserver.
+Öppnar GitHub Pages i Chromium kioskläge. SSH installeras; ingen lokal webserver.
 
 ## Windows-kiosk
 

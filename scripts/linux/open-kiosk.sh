@@ -13,19 +13,17 @@ browser() {
   return 1
 }
 
+# Mildare start på tunn klient / Lubuntu
+sleep 2
+
 if command -v xset >/dev/null 2>&1; then
   xset s off || true
   xset s noblank || true
   xset -dpms || true
 fi
 
-if command -v gsettings >/dev/null 2>&1; then
-  gsettings set org.gnome.desktop.session idle-delay 0 || true
-  gsettings set org.gnome.desktop.screensaver lock-enabled false || true
-fi
-
 BROWSER="$(browser)" || {
-  echo "Ingen Chromium/Chrome hittades. Installera chromium-browser." >&2
+  echo "Ingen Chromium/Chrome hittades. Kor: bash scripts/linux/install.sh" >&2
   exit 1
 }
 
@@ -39,6 +37,6 @@ exec "$BROWSER" \
   --disable-features=TranslateUI \
   --overscroll-history-navigation=0 \
   --password-store=basic \
+  --no-first-run \
   --incognito \
-  --app="$URL" \
   "$URL"
