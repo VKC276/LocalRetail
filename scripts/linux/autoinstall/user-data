@@ -2,13 +2,13 @@
 # Ubuntu 24.04 LTS autoinstall for LocalRetail kiosk.
 # Boot the Ubuntu Server 24.04 ISO with this seed attached (see README.md).
 #
-# BEFORE USE:
-#   1. Generate a password hash:  bash scripts/linux/autoinstall/make-password.sh 'DittLösen'
-#   2. Paste the hash into identity.password below (replace REPLACE_WITH_PASSWORD_HASH).
-#   3. Optionally set authorized SSH keys under ssh.authorized-keys.
+# Password hash is filled by ensure-password.sh / create-usb.sh (REPLACE_WITH_PASSWORD_HASH).
+# Seed path on Ventoy USB: /ventoy/cidata/ (see create-usb.sh + conf_replace GRUB).
 
 autoinstall:
   version: 1
+  # Empty = fully noninteractive (no language/keyboard/disk dialogs).
+  interactive-sections: []
   locale: sv_SE.UTF-8
   keyboard:
     layout: se
@@ -45,6 +45,8 @@ autoinstall:
   storage:
     layout:
       name: direct
+      match:
+        size: largest
 
   packages:
     - openssh-server
@@ -61,11 +63,12 @@ autoinstall:
     runcmd:
       - [ /usr/local/sbin/localretail-kiosk-setup.sh ]
 
+  # Scripts live on the Ventoy partition at /ventoy/cidata/ (not inside the Ubuntu ISO).
   late-commands:
     - curtin in-target --target=/target -- mkdir -p /usr/local/sbin /opt/localretail/bin /etc/systemd/system
-    - cp /cdrom/cidata/localretail-kiosk-setup.sh /target/usr/local/sbin/localretail-kiosk-setup.sh
-    - cp /cdrom/cidata/open-kiosk.sh /target/opt/localretail/bin/open-kiosk.sh
-    - cp /cdrom/cidata/localretail-kiosk-setup.service /target/etc/systemd/system/localretail-kiosk-setup.service
+    - cp /ventoy/cidata/localretail-kiosk-setup.sh /target/usr/local/sbin/localretail-kiosk-setup.sh
+    - cp /ventoy/cidata/open-kiosk.sh /target/opt/localretail/bin/open-kiosk.sh
+    - cp /ventoy/cidata/localretail-kiosk-setup.service /target/etc/systemd/system/localretail-kiosk-setup.service
     - curtin in-target --target=/target -- chmod 755 /usr/local/sbin/localretail-kiosk-setup.sh /opt/localretail/bin/open-kiosk.sh
     - curtin in-target --target=/target -- systemctl enable localretail-kiosk-setup.service
     - curtin in-target --target=/target -- systemctl enable ssh.service || curtin in-target --target=/target -- systemctl enable sshd.service || true

@@ -1,17 +1,20 @@
 #!/usr/bin/env bash
-# Creates a complete LocalRetail kiosk install USB (Ventoy + Ubuntu + cidata).
+# Creates a complete LocalRetail kiosk install USB (Ventoy + Ubuntu + autoinstall).
 #
 # Usage:
 #   sudo bash create-usb.sh /dev/sdX
 #   sudo bash create-usb.sh /dev/sdX 'DittLosen'
 #
 # This ERASES the USB device. Target machine disk is wiped on install too.
+#
+# On the kiosk PC: boot USB -> pick Ubuntu Server ISO once (or it is the only
+# entry under /iso/). GRUB already has autoinstall + nocloud seed baked in —
+# no manual "e" edit, no installer dialogs.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 OUT="$ROOT/out"
 CACHE="$OUT/cache"
-CIDATA_ISO="$OUT/localretail-cidata.iso"
 
 UBUNTU_VERSION="${UBUNTU_VERSION:-24.04.5}"
 UBUNTU_ISO_NAME="ubuntu-${UBUNTU_VERSION}-live-server-amd64.iso"
@@ -45,7 +48,7 @@ Exempel:
   lsblk
   sudo bash $0 /dev/sda
 
-Raderar ALLT pa USB-enheten. Kräver Linux (t.ex. Pi5) med sudo.
+Raderar ALLT pa USB-enheten. Kraver Linux (t.ex. Pi5) med sudo.
 EOF
   exit 1
 fi
@@ -59,7 +62,6 @@ need_cmd umount
 need_cmd tar
 need_cmd python3
 
-# Refuse obvious system disks
 ROOT_SRC="$(findmnt -n -o SOURCE / 2>/dev/null || true)"
 if [[ -n "$ROOT_SRC" && "$ROOT_SRC" == "$DISK"* ]]; then
   die "$DISK verkar vara systemdisken (/). Avbryter."
@@ -73,8 +75,7 @@ read -r -p "Radera ALLT pa $DISK och skapa install-USB? Skriv JA: " CONFIRM
 
 mkdir -p "$OUT" "$CACHE"
 
-info "Losensord / cidata-ISO"
-# ensure-password + prepare as the invoking user if possible
+info "Losenord"
 SUDO_USER_NAME="${SUDO_USER:-}"
 run_as_invoker() {
   if [[ -n "$SUDO_USER_NAME" && "$SUDO_USER_NAME" != "root" ]]; then
@@ -87,7 +88,6 @@ run_as_invoker() {
 if [[ -n "$PASSWORD" ]]; then
   run_as_invoker bash "$ROOT/ensure-password.sh" "$PASSWORD"
 else
-  # Prompt must run on tty; drop sudo for read if possible
   if [[ -n "$SUDO_USER_NAME" && "$SUDO_USER_NAME" != "root" ]]; then
     run_as_invoker bash "$ROOT/ensure-password.sh"
   else
@@ -95,15 +95,24 @@ else
   fi
 fi
 
-# Packages for ISO build
-if ! command -v genisoimage >/dev/null 2>&1 && ! command -v mkisofs >/dev/null 2>&1 && ! command -v xorriso >/dev/null 2>&1; then
-  info "Installerar genisoimage"
-  apt-get update -qq
-  apt-get install -y genisoimage
+# Refresh staged cidata (password already in user-data)
+if command -v genisoimage >/dev/null 2>&1 || command -v mkisofs >/dev/null 2>&1 || command -v xorriso >/dev/null 2>&1; then
+  run_as_invoker bash "$ROOT/prepare-usb.sh" || true
+else
+  STAGE="$OUT/cidata"
+  rm -rf "$STAGE"
+  mkdir -p "$STAGE"
+  cp "$ROOT/user-data" "$STAGE/user-data"
+  cp "$ROOT/meta-data" "$STAGE/meta-data"
+  cp "$ROOT/localretail-kiosk-setup.sh" "$STAGE/localretail-kiosk-setup.sh"
+  cp "$ROOT/localretail-kiosk-setup.service" "$STAGE/localretail-kiosk-setup.service"
+  cp "$ROOT/open-kiosk.sh" "$STAGE/open-kiosk.sh"
+  chmod 755 "$STAGE/"*.sh
 fi
 
-run_as_invoker bash "$ROOT/prepare-usb.sh"
-[[ -f "$CIDATA_ISO" ]] || die "cidata-ISO saknas efter prepare-usb.sh"
+[[ -f "$ROOT/user-data" ]] || die "Saknar user-data"
+grep -E '^[[:space:]]*password:[[:space:]]*"?REPLACE_WITH_PASSWORD_HASH"?[[:space:]]*$' "$ROOT/user-data" >/dev/null \
+  && die "Password-hash saknas i user-data"
 
 UBUNTU_ISO="$CACHE/$UBUNTU_ISO_NAME"
 if [[ -f "$UBUNTU_ISO" ]]; then
@@ -114,7 +123,6 @@ else
   mv "$UBUNTU_ISO.partial" "$UBUNTU_ISO"
 fi
 
-# Ventoy
 if [[ -z "$VENTOY_TAG" ]]; then
   VENTOY_TAG="$(curl -fsSL https://api.github.com/repos/ventoy/Ventoy/releases/latest | python3 -c 'import sys,json; print(json.load(sys.stdin)["tag_name"])')"
 fi
@@ -131,14 +139,12 @@ if [[ ! -d "$VENTOY_DIR" ]]; then
 fi
 [[ -x "$VENTOY_DIR/Ventoy2Disk.sh" ]] || die "Ventoy2Disk.sh saknas i $VENTOY_DIR"
 
-# Unmount any mounted partitions on the device
 info "Avmonterar partitioner pa $DISK"
 while read -r mp; do
   [[ -n "$mp" ]] && umount "$mp" || true
 done < <(lsblk -ln -o MOUNTPOINT "$DISK" | awk 'NF')
 
 info "Installerar Ventoy pa $DISK (raderar USB)"
-# -I = force install even if already ventoy; answer Ventoy's own confirm prompt
 yes | bash "$VENTOY_DIR/Ventoy2Disk.sh" -I -g "$DISK" || \
   bash "$VENTOY_DIR/Ventoy2Disk.sh" -I -g "$DISK"
 
@@ -154,23 +160,56 @@ mkdir -p "$MNT"
 info "Monterar $PART1"
 mount "$PART1" "$MNT"
 
-info "Kopierar ISO-filer till USB"
-cp -v "$UBUNTU_ISO" "$MNT/"
-cp -v "$CIDATA_ISO" "$MNT/localretail-cidata.iso"
-sync
+info "Skriver Ubuntu ISO + Ventoy autoinstall-config"
+mkdir -p "$MNT/iso" "$MNT/ventoy/cidata"
+cp -v "$UBUNTU_ISO" "$MNT/iso/$UBUNTU_ISO_NAME"
 
+# Seed for cloud-init (path used by GRUB: ds=nocloud;s=/ventoy/cidata/)
+cp -v "$ROOT/user-data" "$MNT/ventoy/cidata/user-data"
+cp -v "$ROOT/meta-data" "$MNT/ventoy/cidata/meta-data"
+cp -v "$ROOT/localretail-kiosk-setup.sh" "$MNT/ventoy/cidata/localretail-kiosk-setup.sh"
+cp -v "$ROOT/localretail-kiosk-setup.service" "$MNT/ventoy/cidata/localretail-kiosk-setup.service"
+cp -v "$ROOT/open-kiosk.sh" "$MNT/ventoy/cidata/open-kiosk.sh"
+chmod 755 "$MNT/ventoy/cidata/"*.sh
+
+# Bake autoinstall into Ubuntu's GRUB (no manual e-edit)
+cp -v "$ROOT/ubuntu-server-autoinstall-grub.cfg" "$MNT/ventoy/ubuntu-server-autoinstall-grub.cfg"
+
+# Ventoy: only show /iso, replace grub.cfg inside Ubuntu ISO
+cat > "$MNT/ventoy/ventoy.json" <<EOF
+{
+  "control": [
+    { "VTOY_DEFAULT_SEARCH_ROOT": "/iso" },
+    { "VTOY_MENU_TIMEOUT": "5" },
+    { "VTOY_DEFAULT_MENU_MODE": "0" },
+    { "VTOY_LINUX_REMOUNT": "1" }
+  ],
+  "conf_replace": [
+    {
+      "iso": "/iso/ubuntu-*-live-server-amd64.iso",
+      "org": "/boot/grub/grub.cfg",
+      "new": "/ventoy/ubuntu-server-autoinstall-grub.cfg"
+    }
+  ]
+}
+EOF
+
+sync
 umount "$MNT"
 rmdir "$MNT" 2>/dev/null || true
 
 info "Klar."
 cat <<EOF
 
-USB ar redo. Pa kassadatorn (Oracle Workstation):
-  1. Boota fran USB
-  2. Valj $UBUNTU_ISO_NAME i Ventoy-menyn
-  3. Autoinstall kor (hela disken raderas)
+USB ar redo for obevakad install.
 
-Om autoinstall inte startar, i GRUB tryck e och lagg till:
-  autoinstall ds=nocloud;s=/cdrom/cidata/
+Pa kassadatorn:
+  1. Boota fran USB
+  2. Valj $UBUNTU_ISO_NAME (enda ISO under /iso) — Ventoy timeout ~5s
+  3. GRUB bootar autoinstall sjalv (~2s) med:
+       autoinstall ds=nocloud;s=/ventoy/cidata/ nomodeset
+  4. Installern kor utan dialoger (hela storsta disken raderas)
+
+Ingen manuell GRUB-redigering behovs.
 
 EOF
