@@ -81,6 +81,12 @@ read -r -p "Radera ALLT pa $DISK och skapa install-USB? Skriv JA: " CONFIRM
 
 mkdir -p "$OUT" "$CACHE"
 
+# Earlier sudo runs may have left root-owned files in out/ — clean as root first
+rm -rf "$OUT/cidata" "$OUT/mnt-ventoy" "$OUT/mnt-cidata" 2>/dev/null || true
+if [[ -n "${SUDO_USER:-}" && "$SUDO_USER" != "root" ]]; then
+  chown -R "$SUDO_USER:" "$OUT" 2>/dev/null || true
+fi
+
 info "Losenord"
 SUDO_USER_NAME="${SUDO_USER:-}"
 run_as_invoker() {
@@ -101,19 +107,21 @@ else
   fi
 fi
 
-# Refresh staged cidata (password already in user-data)
-if command -v genisoimage >/dev/null 2>&1 || command -v mkisofs >/dev/null 2>&1 || command -v xorriso >/dev/null 2>&1; then
-  run_as_invoker bash "$ROOT/prepare-usb.sh" || true
-else
-  STAGE="$OUT/cidata"
-  rm -rf "$STAGE"
-  mkdir -p "$STAGE"
-  cp "$ROOT/user-data" "$STAGE/user-data"
-  cp "$ROOT/meta-data" "$STAGE/meta-data"
-  cp "$ROOT/localretail-kiosk-setup.sh" "$STAGE/localretail-kiosk-setup.sh"
-  cp "$ROOT/localretail-kiosk-setup.service" "$STAGE/localretail-kiosk-setup.service"
-  cp "$ROOT/open-kiosk.sh" "$STAGE/open-kiosk.sh"
-  chmod 755 "$STAGE/"*.sh
+# Stage cidata as root (avoids permission fights with out/)
+STAGE="$OUT/cidata"
+rm -rf "$STAGE"
+mkdir -p "$STAGE"
+cp "$ROOT/user-data" "$STAGE/user-data"
+cp "$ROOT/meta-data" "$STAGE/meta-data"
+cp "$ROOT/localretail-kiosk-setup.sh" "$STAGE/localretail-kiosk-setup.sh"
+cp "$ROOT/localretail-kiosk-setup.service" "$STAGE/localretail-kiosk-setup.service"
+cp "$ROOT/open-kiosk.sh" "$STAGE/open-kiosk.sh"
+chmod 755 "$STAGE/"*.sh
+# Optional ISO artifact for debugging
+if command -v genisoimage >/dev/null 2>&1; then
+  genisoimage -output "$OUT/localretail-cidata.iso" -volid cidata -joliet -rock "$STAGE" 2>/dev/null || true
+elif command -v xorriso >/dev/null 2>&1; then
+  xorriso -as mkisofs -o "$OUT/localretail-cidata.iso" -V cidata -J -R "$STAGE" 2>/dev/null || true
 fi
 
 [[ -f "$ROOT/user-data" ]] || die "Saknar user-data"
