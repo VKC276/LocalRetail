@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-# Builds a small "cidata" seed ISO you can place beside the Ubuntu Server ISO
-# (Ventoy) or burn/copy onto install media.
-#
+# Builds a small "cidata" seed ISO for Ubuntu autoinstall (Ventoy companion).
 # Result: scripts/linux/autoinstall/out/localretail-cidata.iso
 set -euo pipefail
 
@@ -14,11 +12,7 @@ if [[ ! -f "$ROOT/user-data" ]]; then
   exit 1
 fi
 
-if grep -q 'REPLACE_WITH_PASSWORD_HASH' "$ROOT/user-data"; then
-  echo "Byt REPLACE_WITH_PASSWORD_HASH i user-data först:" >&2
-  echo "  bash $ROOT/make-password.sh 'DittLösen'" >&2
-  exit 1
-fi
+bash "$ROOT/ensure-password.sh" "${1:-}"
 
 rm -rf "$STAGE"
 mkdir -p "$STAGE" "$OUT"
@@ -39,18 +33,9 @@ elif command -v mkisofs >/dev/null 2>&1; then
 elif command -v xorriso >/dev/null 2>&1; then
   xorriso -as mkisofs -o "$ISO" -V cidata -J -R "$STAGE"
 else
-  echo "Installera genisoimage, mkisofs eller xorriso." >&2
+  echo "Installera genisoimage:  sudo apt-get install -y genisoimage" >&2
   echo "Seed-mappen finns klar i: $STAGE" >&2
-  echo "Kopiera den till USB som /cidata (user-data + meta-data + skript)." >&2
-  exit 0
+  exit 1
 fi
 
 echo "Skapad: $ISO"
-echo
-echo "Ventoy:"
-echo "  1. Lägg Ubuntu 24.04 Server ISO på Ventoy-USB"
-echo "  2. Lägg även $ISO på samma USB"
-echo "  3. Boota Ubuntu-ISO:n, välj autoinstall om Ventoy frågar om cidata"
-echo
-echo "Manuell kernel-parameter (GRUB):"
-echo "  autoinstall ds=nocloud;s=/cdrom/cidata/"

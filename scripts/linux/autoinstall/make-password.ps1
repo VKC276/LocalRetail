@@ -1,23 +1,19 @@
-# Generates a SHA-512 password hash for autoinstall user-data.
+﻿# Generates a SHA-512 password hash for autoinstall user-data.
 param(
   [Parameter(Mandatory = $true, Position = 0)]
   [string]$Password
 )
 
 function Get-PasswordHash([string]$Plain) {
-  $openssl = @(
-    "openssl",
+  $candidates = @(
+    (Get-Command openssl -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source),
     "$env:ProgramFiles\Git\usr\bin\openssl.exe",
     "${env:ProgramFiles(x86)}\Git\usr\bin\openssl.exe"
-  ) | Where-Object { $_ -eq "openssl" -or (Test-Path $_) } | Select-Object -First 1
+  ) | Where-Object { $_ -and (Test-Path $_) }
 
-  if ($openssl) {
-    if ($openssl -eq "openssl") {
-      $hash = & openssl passwd -6 $Plain 2>$null
-    } else {
-      $hash = & $openssl passwd -6 $Plain 2>$null
-    }
-    if ($LASTEXITCODE -eq 0 -and $hash) { return $hash.Trim() }
+  foreach ($openssl in $candidates) {
+    $hash = & $openssl passwd -6 $Plain 2>$null
+    if ($LASTEXITCODE -eq 0 -and $hash) { return ($hash | Select-Object -Last 1).ToString().Trim() }
   }
 
   if (Get-Command wsl -ErrorAction SilentlyContinue) {
@@ -25,7 +21,7 @@ function Get-PasswordHash([string]$Plain) {
     if ($LASTEXITCODE -eq 0 -and $hash) { return ($hash | Select-Object -Last 1).ToString().Trim() }
   }
 
-  throw "Hittade ingen openssl. Installera Git for Windows eller aktivera WSL."
+  throw "Hittade ingen openssl. Installera Git for Windows (med usr\bin) eller aktivera WSL."
 }
 
 Get-PasswordHash $Password
