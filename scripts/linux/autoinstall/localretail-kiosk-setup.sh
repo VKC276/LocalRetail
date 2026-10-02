@@ -24,6 +24,17 @@ apt-get install -y openssh-server chromium-browser unattended-upgrades x11-xserv
 
 systemctl enable --now ssh.service 2>/dev/null || systemctl enable --now sshd.service 2>/dev/null || true
 
+# Svensk tangentbordslayout: X11 + TTY/konsol
+export DEBIAN_FRONTEND=noninteractive
+printf '%s\n' 'XKBMODEL="pc105"' 'XKBLAYOUT="se"' 'XKBVARIANT=""' 'XKBOPTIONS=""' 'BACKSPACE="guess"' > /etc/default/keyboard
+if command -v localectl >/dev/null 2>&1; then
+  localectl set-x11-keymap se pc105 "" "" || true
+  localectl set-keymap se || true
+fi
+setupcon --force 2>/dev/null || true
+# Apply for current TTY if possible
+loadkeys se 2>/dev/null || true
+
 # GDM autologin + force Xorg (Wayland often crashes with kiosk Chromium on thin clients)
 mkdir -p /etc/gdm3
 cat > /etc/gdm3/custom.conf <<EOF

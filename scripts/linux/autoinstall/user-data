@@ -13,6 +13,7 @@ autoinstall:
   keyboard:
     layout: se
     variant: ""
+    toggle: null
   timezone: Europe/Stockholm
   source:
     id: ubuntu-server-minimal
@@ -57,8 +58,12 @@ autoinstall:
     - ca-certificates
     - x11-xserver-utils
     - unclutter
+    - console-setup
+    - keyboard-configuration
 
   user-data:
+    keyboard:
+      layout: se
     runcmd:
       - [ /usr/local/sbin/localretail-kiosk-setup.sh ]
 
@@ -73,8 +78,12 @@ autoinstall:
     - curtin in-target --target=/target -- systemctl enable ssh.service || curtin in-target --target=/target -- systemctl enable sshd.service || true
     # Xorg + autologin before first graphical login (avoids Wayland crash loops)
     - printf '%s\n' '[daemon]' 'AutomaticLoginEnable=true' 'AutomaticLogin=kiosk' 'WaylandEnable=false' > /target/etc/gdm3/custom.conf
-    # Safer graphics on thin clients / Oracle Workstation
+    # Swedish keyboard for console (TTY) and X11
+    - printf '%s\n' 'XKBMODEL="pc105"' 'XKBLAYOUT="se"' 'XKBVARIANT=""' 'XKBOPTIONS=""' 'BACKSPACE="guess"' > /target/etc/default/keyboard
+    - curtin in-target --target=/target -- setupcon --force || true
+    - curtin in-target --target=/target -- localectl set-x11-keymap se pc105 || true
+    - curtin in-target --target=/target -- localectl set-keymap se || true    # Safer graphics on thin clients / Oracle Workstation
     - curtin in-target --target=/target -- sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="nomodeset quiet splash"/' /etc/default/grub
     - curtin in-target --target=/target -- update-grub || true
     - curtin in-target --target=/target -- apt-get update
-    - curtin in-target --target=/target -- apt-get install -y openssh-server || true
+    - curtin in-target --target=/target -- apt-get install -y openssh-server console-setup keyboard-configuration || true

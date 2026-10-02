@@ -2,12 +2,15 @@
 
 Obevakat installerar:
 
-- Ubuntu 24.04 LTS + skrivbord (minimal)
+- Ubuntu 24.04 LTS + skrivbord (minimal), **svensk locale + tangentbord (se)**
 - OpenSSH, GDM autologin som `kiosk`, Xorg (inte Wayland)
 - Chromium i kioskläge mot `https://retail.vastervikclimbing.se/?kiosk=1`
 - `nomodeset` i GRUB (stabilare på tunn klient / Oracle Workstation)
 
 **Viktigt:** raderar den största disken på måldatorn.
+
+**Tangentbord:** Efter install är layout **svensk** i skrivbord, TTY (`Ctrl+Alt+F3`) och SSH-sessioners lokala xkb om satt.  
+Ventoy/Ubuntu-ISO:ns GRUB-meny under boot är fortfarande US (begränsning i bootloader) — där behövs US-mappning bara om ni redigerar kernel-raden manuellt.
 
 ---
 
