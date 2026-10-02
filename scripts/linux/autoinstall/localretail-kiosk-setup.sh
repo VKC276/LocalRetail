@@ -24,32 +24,31 @@ apt-get install -y openssh-server chromium-browser unattended-upgrades x11-xserv
 
 systemctl enable --now ssh.service 2>/dev/null || systemctl enable --now sshd.service 2>/dev/null || true
 
-# GDM autologin
+# GDM autologin + force Xorg (Wayland often crashes with kiosk Chromium on thin clients)
 mkdir -p /etc/gdm3
-if [[ -f /etc/gdm3/custom.conf ]]; then
-  sed -i 's/^#\?AutomaticLoginEnable=.*/AutomaticLoginEnable=true/' /etc/gdm3/custom.conf || true
-  sed -i "s/^#\?AutomaticLogin=.*/AutomaticLogin=${KIOSK_USER}/" /etc/gdm3/custom.conf || true
-  if ! grep -q '^AutomaticLoginEnable=' /etc/gdm3/custom.conf; then
-    printf '\n[daemon]\nAutomaticLoginEnable=true\nAutomaticLogin=%s\n' "$KIOSK_USER" >> /etc/gdm3/custom.conf
-  elif ! grep -q '^AutomaticLogin=' /etc/gdm3/custom.conf; then
-    printf 'AutomaticLogin=%s\n' "$KIOSK_USER" >> /etc/gdm3/custom.conf
-  fi
-else
-  cat > /etc/gdm3/custom.conf <<EOF
+cat > /etc/gdm3/custom.conf <<EOF
 [daemon]
 AutomaticLoginEnable=true
 AutomaticLogin=${KIOSK_USER}
-EOF
-fi
+WaylandEnable=false
 
-# Autostart kiosk for the kiosk user
+[security]
+
+[xdmcp]
+
+[chooser]
+
+[debug]
+EOF
+
+# Autostart kiosk for the kiosk user (delayed so desktop can finish starting)
 install -d -o "$KIOSK_USER" -g "$KIOSK_USER" -m 755 "$KIOSK_HOME/.config/autostart"
 cat > "$KIOSK_HOME/.config/autostart/local-retail-kiosk.desktop" <<EOF
 [Desktop Entry]
 Type=Application
 Name=LocalRetail kiosk
-Comment=Öppnar självbetjäningen i helskärm
-Exec=${OPEN_KIOSK}
+Comment=Oppnar sjalvbetjaningen i helskarm
+Exec=/bin/bash -c 'sleep 8; exec ${OPEN_KIOSK}'
 X-GNOME-Autostart-enabled=true
 X-GNOME-Autostart-Phase=Application
 Terminal=false
