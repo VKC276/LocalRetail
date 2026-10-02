@@ -1,16 +1,12 @@
-# Ubuntu 24.04 autoinstall — LocalRetail-kiosk
+# Ubuntu 24.04 autoinstall — LocalRetail-kiosk (Openbox)
 
-Obevakat installerar:
+Lättviktskiosk: **Ubuntu Server + Openbox + LightDM + Chromium** (inte GNOME).
 
-- Ubuntu 24.04 LTS + skrivbord (minimal), **svensk locale + tangentbord (se)**
-- OpenSSH, GDM autologin som `kiosk`, Xorg (inte Wayland)
-- Chromium i kioskläge mot `https://retail.vastervikclimbing.se/?kiosk=1`
-- `nomodeset` i GRUB (stabilare på tunn klient / Oracle Workstation)
+Autoinstall sätter hostname `kiosk-01`, användare `kiosk`, svensk layout, SSH.
 
-**Viktigt:** raderar den största disken på måldatorn.
+**Viktigt:** raderar största disken. Dialoger om namn/användare = autoinstall är **inte** aktiv.
 
-**Tangentbord:** Efter install är layout **svensk** i skrivbord, TTY (`Ctrl+Alt+F3`) och SSH-sessioners lokala xkb om satt.  
-Ventoy/Ubuntu-ISO:ns GRUB-meny under boot är fortfarande US (begränsning i bootloader) — där behövs US-mappning bara om ni redigerar kernel-raden manuellt.
+En färdig desktop-ISO (Ubuntu Desktop/Lubuntu) tar **inte** bort frågorna — samma seed/GRUB behövs. Server+Openbox är lättare och stabilare på Workstation 6.
 
 ---
 
@@ -19,26 +15,19 @@ Ventoy/Ubuntu-ISO:ns GRUB-meny under boot är fortfarande US (begränsning i boo
 ```bash
 cd ~/LocalRetail
 git pull
-# Om du redan har en gammal password-hash och vill byta:
-#   sed -i 's/password: "\$6\$[^"]*"/password: "REPLACE_WITH_PASSWORD_HASH"/' scripts/linux/autoinstall/user-data
-sudo apt-get install -y genisoimage curl python3
+sed -i 's/password: "\$6\$[^"]*"/password: "REPLACE_WITH_PASSWORD_HASH"/' scripts/linux/autoinstall/user-data
+sudo apt-get install -y genisoimage curl python3 dosfstools
 lsblk
 sudo bash scripts/linux/autoinstall/create-usb.sh /dev/sda
 ```
 
-Skriv `JA`, ange kiosk-lösenord när det frågas (eller: `.../create-usb.sh /dev/sda 'DittLosen'`).
+## Installera
 
-## Installera kassa
+1. Boota USB → välj Ubuntu Server under `/iso`  
+2. Ev. persistence: `localretail-cidata`  
+3. GRUB: **Install LocalRetail kiosk (autoinstall)** ska starta själv  
+4. Inga frågor om namn/username  
 
-1. Boota USB på Oracle Workstation  
-2. Ventoy: välj Ubuntu Server-ISO:n under `/iso` (eller vänta timeout)  
-3. GRUB ska visa **Install LocalRetail kiosk (autoinstall)** och starta själv  
-4. Vänta (desktop-paket tar ofta 15–40 min). Skärmen kan vara mörk — det är OK om disken/nät jobbar  
-5. Omstart → autologin som `kiosk` → kassan öppnas  
+Om dialoger: i GRUB `e` och kontrollera att `linux`-raden har `autoinstall ds=nocloud;s=/ventoy/cidata/`.
 
 SSH: `ssh kiosk@<ip>`
-
-## Felsök
-
-- Dialoger / manuell installer: USB saknar `ventoy/ventoy.json` — kör om `create-usb.sh` efter `git pull`
-- Reboot-loop: i GRUB `e` → lägg till `systemd.unit=multi-user.target nomodeset` → inaktivera kiosk-autostart

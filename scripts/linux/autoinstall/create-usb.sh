@@ -62,6 +62,12 @@ need_cmd umount
 need_cmd tar
 need_cmd python3
 
+# Optional but recommended for cidata.img
+if ! command -v mkfs.vfat >/dev/null 2>&1; then
+  info "Installerar dosfstools (cidata.img)"
+  apt-get update -qq && apt-get install -y dosfstools || true
+fi
+
 ROOT_SRC="$(findmnt -n -o SOURCE / 2>/dev/null || true)"
 if [[ -n "$ROOT_SRC" && "$ROOT_SRC" == "$DISK"* ]]; then
   die "$DISK verkar vara systemdisken (/). Avbryter."
@@ -161,26 +167,41 @@ info "Monterar $PART1"
 mount "$PART1" "$MNT"
 
 info "Skriver Ubuntu ISO + Ventoy autoinstall-config"
-mkdir -p "$MNT/iso" "$MNT/ventoy/cidata"
+mkdir -p "$MNT/iso" "$MNT/ventoy/cidata" "$MNT/persistence"
 cp -v "$UBUNTU_ISO" "$MNT/iso/$UBUNTU_ISO_NAME"
 
-# Seed for cloud-init (path used by GRUB: ds=nocloud;s=/ventoy/cidata/)
-cp -v "$ROOT/user-data" "$MNT/ventoy/cidata/user-data"
-cp -v "$ROOT/meta-data" "$MNT/ventoy/cidata/meta-data"
-cp -v "$ROOT/localretail-kiosk-setup.sh" "$MNT/ventoy/cidata/localretail-kiosk-setup.sh"
-cp -v "$ROOT/localretail-kiosk-setup.service" "$MNT/ventoy/cidata/localretail-kiosk-setup.service"
-cp -v "$ROOT/open-kiosk.sh" "$MNT/ventoy/cidata/open-kiosk.sh"
+# Seed files on Ventoy partition (ds=nocloud;s=/ventoy/cidata/)
+for f in user-data meta-data localretail-kiosk-setup.sh localretail-kiosk-setup.service open-kiosk.sh; do
+  cp -v "$ROOT/$f" "$MNT/ventoy/cidata/$f"
+done
 chmod 755 "$MNT/ventoy/cidata/"*.sh
 
-# Bake autoinstall into Ubuntu's GRUB (no manual e-edit)
+# Also a FAT image labeled cidata — cloud-init finds it by label if /ventoy path fails
+CIDATA_IMG="$MNT/persistence/localretail-cidata.img"
+info "Skapar cidata.img (volymetikett cidata)"
+if command -v mkfs.vfat >/dev/null 2>&1; then
+  dd if=/dev/zero of="$CIDATA_IMG" bs=1M count=8 status=none
+  mkfs.vfat -n cidata "$CIDATA_IMG"
+  CIDATA_MNT="$OUT/mnt-cidata"
+  mkdir -p "$CIDATA_MNT"
+  mount -o loop "$CIDATA_IMG" "$CIDATA_MNT"
+  cp -v "$MNT/ventoy/cidata/"* "$CIDATA_MNT/"
+  sync
+  umount "$CIDATA_MNT"
+  rmdir "$CIDATA_MNT" 2>/dev/null || true
+else
+  info "mkfs.vfat saknas (apt install dosfstools) — hoppar over cidata.img"
+  rm -f "$CIDATA_IMG"
+fi
+
 cp -v "$ROOT/ubuntu-server-autoinstall-grub.cfg" "$MNT/ventoy/ubuntu-server-autoinstall-grub.cfg"
 
-# Ventoy: only show /iso, replace grub.cfg inside Ubuntu ISO
+# Ventoy plugins: conf_replace (bake autoinstall) + persistence (cidata.img)
 cat > "$MNT/ventoy/ventoy.json" <<EOF
 {
   "control": [
     { "VTOY_DEFAULT_SEARCH_ROOT": "/iso" },
-    { "VTOY_MENU_TIMEOUT": "5" },
+    { "VTOY_MENU_TIMEOUT": "3" },
     { "VTOY_DEFAULT_MENU_MODE": "0" },
     { "VTOY_LINUX_REMOUNT": "1" }
   ],
@@ -190,9 +211,25 @@ cat > "$MNT/ventoy/ventoy.json" <<EOF
       "org": "/boot/grub/grub.cfg",
       "new": "/ventoy/ubuntu-server-autoinstall-grub.cfg"
     }
+  ],
+  "persistence": [
+    {
+      "image": "/iso/ubuntu-*-live-server-amd64.iso",
+      "backend": "/persistence/localretail-cidata.img",
+      "autosel": 1,
+      "timeout": 1
+    }
   ]
 }
 EOF
+
+# Sanity check — fail loud if seed missing
+[[ -f "$MNT/ventoy/cidata/user-data" ]] || die "user-data saknas pa USB"
+[[ -f "$MNT/ventoy/ventoy.json" ]] || die "ventoy.json saknas"
+grep -q REPLACE_WITH_PASSWORD_HASH "$MNT/ventoy/cidata/user-data" && die "Password-hash saknas i USB user-data"
+
+info "USB-innehall:"
+find "$MNT/iso" "$MNT/ventoy" "$MNT/persistence" -type f 2>/dev/null | sed "s|^$MNT||" || true
 
 sync
 umount "$MNT"
@@ -201,15 +238,16 @@ rmdir "$MNT" 2>/dev/null || true
 info "Klar."
 cat <<EOF
 
-USB ar redo for obevakad install.
+USB ar redo (lattvikts-Openbox-kiosk, inte GNOME).
 
 Pa kassadatorn:
-  1. Boota fran USB
-  2. Valj $UBUNTU_ISO_NAME (enda ISO under /iso) — Ventoy timeout ~5s
-  3. GRUB bootar autoinstall sjalv (~2s) med:
-       autoinstall ds=nocloud;s=/ventoy/cidata/ nomodeset
-  4. Installern kor utan dialoger (hela storsta disken raderas)
+  1. Boota USB
+  2. Valj Ubuntu Server-ISO under /iso
+  3. Om Ventoy fragar om persistence: valj localretail-cidata (eller autosel)
+  4. GRUB ska visa "Install LocalRetail kiosk (autoinstall)" och starta sjalv
+  5. INGA fragor om namn/anvandare — annars ar autoinstall inte aktiv
 
-Ingen manuell GRUB-redigering behovs.
+Om du andå far dialoger: i GRUB tryck e och kontrollera att raden innehåller:
+  autoinstall ds=nocloud;s=/ventoy/cidata/
 
 EOF
