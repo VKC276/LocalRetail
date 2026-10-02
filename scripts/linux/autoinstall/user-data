@@ -1,0 +1,73 @@
+#cloud-config
+# Ubuntu 24.04 LTS autoinstall for LocalRetail kiosk.
+# Boot the Ubuntu Server 24.04 ISO with this seed attached (see README.md).
+#
+# BEFORE USE:
+#   1. Generate a password hash:  bash scripts/linux/autoinstall/make-password.sh 'DittLösen'
+#   2. Paste the hash into identity.password below (replace REPLACE_WITH_PASSWORD_HASH).
+#   3. Optionally set authorized SSH keys under ssh.authorized-keys.
+
+autoinstall:
+  version: 1
+  locale: sv_SE.UTF-8
+  keyboard:
+    layout: se
+    variant: ""
+  timezone: Europe/Stockholm
+  source:
+    id: ubuntu-server-minimal
+    search_drivers: true
+
+  identity:
+    hostname: kiosk-01
+    username: kiosk
+    # openssl passwd -6 'DittLösen'
+    password: "REPLACE_WITH_PASSWORD_HASH"
+
+  network:
+    version: 2
+    ethernets:
+      all-en:
+        match:
+          name: "en*"
+        dhcp4: true
+      all-eth:
+        match:
+          name: "eth*"
+        dhcp4: true
+
+  ssh:
+    install-server: true
+    allow-pw: true
+    # authorized-keys:
+    #   - "ssh-ed25519 AAAA... admin@vkc"
+
+  storage:
+    layout:
+      name: direct
+
+  packages:
+    - openssh-server
+    - ubuntu-desktop-minimal
+    - gdm3
+    - chromium-browser
+    - unattended-upgrades
+    - curl
+    - ca-certificates
+    - x11-xserver-utils
+    - unclutter
+
+  user-data:
+    runcmd:
+      - [ /usr/local/sbin/localretail-kiosk-setup.sh ]
+
+  late-commands:
+    - curtin in-target --target=/target -- mkdir -p /usr/local/sbin /opt/localretail/bin /etc/systemd/system
+    - cp /cdrom/cidata/localretail-kiosk-setup.sh /target/usr/local/sbin/localretail-kiosk-setup.sh
+    - cp /cdrom/cidata/open-kiosk.sh /target/opt/localretail/bin/open-kiosk.sh
+    - cp /cdrom/cidata/localretail-kiosk-setup.service /target/etc/systemd/system/localretail-kiosk-setup.service
+    - curtin in-target --target=/target -- chmod 755 /usr/local/sbin/localretail-kiosk-setup.sh /opt/localretail/bin/open-kiosk.sh
+    - curtin in-target --target=/target -- systemctl enable localretail-kiosk-setup.service
+    - curtin in-target --target=/target -- systemctl enable ssh.service || curtin in-target --target=/target -- systemctl enable sshd.service || true
+    - curtin in-target --target=/target -- apt-get update
+    - curtin in-target --target=/target -- apt-get install -y openssh-server || true

@@ -24,9 +24,13 @@ Publicera WallFlow-frontenden som vanligt (`index.html` + `kiosk-catalog.js`).
 
 ## Linux-kiosk
 
+Manuellt på en befintlig Ubuntu:
+
 ```bash
 bash scripts/linux/install.sh
 ```
+
+**Obevaktad install (set and forget):** se [`scripts/linux/autoinstall/README.md`](scripts/linux/autoinstall/README.md) — Ubuntu 24.04 + OpenSSH + Chromium + autologin + kioskstart från USB.
 
 Öppnar GitHub Pages i Chromium kioskläge. SSH-server installeras; ingen lokal webserver.
 

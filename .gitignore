@@ -8,3 +8,4 @@ _import
 .env
 .env.*
 !.env.example
+scripts/linux/autoinstall/out/

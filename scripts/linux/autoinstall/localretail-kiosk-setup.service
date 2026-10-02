@@ -1,0 +1,13 @@
+[Unit]
+Description=LocalRetail kiosk first-boot setup
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=!/var/lib/localretail/kiosk-setup.done
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/localretail-kiosk-setup.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
