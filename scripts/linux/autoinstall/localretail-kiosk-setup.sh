@@ -3,9 +3,15 @@
 set -euo pipefail
 
 MARKER=/var/lib/localretail/kiosk-setup.done
-KIOSK_USER=kiosk
+# Override on interactive installs: sudo KIOSK_USER=retail /usr/local/sbin/localretail-kiosk-setup.sh
+KIOSK_USER="${KIOSK_USER:-kiosk}"
 KIOSK_HOME="/home/${KIOSK_USER}"
 OPEN_KIOSK=/opt/localretail/bin/open-kiosk.sh
+
+if ! id "$KIOSK_USER" >/dev/null 2>&1; then
+  echo "Anvandaren '$KIOSK_USER' finns inte. Kor t.ex. KIOSK_USER=retail ..." >&2
+  exit 1
+fi
 
 mkdir -p /var/lib/localretail /opt/localretail/bin
 chmod 755 /opt/localretail/bin
