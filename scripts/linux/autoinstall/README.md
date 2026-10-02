@@ -10,52 +10,82 @@ Obevakat installerar:
 
 **Viktigt:** `storage.layout: direct` raderar hela disken.
 
-## 1. Förbered lösenord
+---
 
-På Linux/WSL/macOS:
+## Windows (rekommenderat hos er)
 
-```bash
-bash scripts/linux/autoinstall/make-password.sh 'DittLösen'
+### A. Förbered seed
+
+I PowerShell från repot:
+
+```powershell
+cd scripts\linux\autoinstall
+.\prepare-usb.ps1
 ```
 
-Klistra in hashen i `user-data` där det står `REPLACE_WITH_PASSWORD_HASH`.
+Skriptet frågar efter lösenord, skriver hash till `user-data`, skapar `out\cidata\` och försöker bygga `out\localretail-cidata.iso`.
 
-Lägg gärna in din SSH-nyckel under `ssh.authorized-keys` i samma fil.
+Bara hash:
 
-## 2. Bygg seed-ISO
-
-```bash
-bash scripts/linux/autoinstall/prepare-usb.sh
+```powershell
+.\make-password.ps1 'DittLösen'
 ```
 
-Skapar `scripts/linux/autoinstall/out/localretail-cidata.iso`.
+Kräver **Git for Windows** (openssl) eller **WSL**.
 
-## 3. USB med Ventoy (enklast)
+### B. Skapa USB med Ventoy
 
-1. Installera [Ventoy](https://www.ventoy.net/) på USB.
-2. Kopiera dit:
+1. Ladda ner [Ventoy](https://www.ventoy.net/) och kör `Ventoy2Disk.exe` → installera på USB (raderar USB:n).
+2. Ladda ner **Ubuntu 24.04 LTS Server** (amd64):  
+   https://ubuntu.com/download/server
+3. Kopiera till USB:n (Ventoy-partitionen):
    - `ubuntu-24.04.x-live-server-amd64.iso`
-   - `localretail-cidata.iso`
-3. Boota från USB på Oracle Workstation.
-4. Välj Ubuntu Server-ISO:n. Ventoy/autoinstall ska plocka upp `cidata`.
+   - `scripts\linux\autoinstall\out\localretail-cidata.iso`
+4. Sätt USB i Oracle Workstation, boota från USB.
+5. Välj Ubuntu Server-ISO:n i Ventoy-menyn.
 
-Om autoinstall inte startar, redigera GRUB-raden och lägg till:
+Om autoinstall inte startar: i GRUB, `e` för att redigera och lägg till:
 
 ```text
 autoinstall ds=nocloud;s=/cdrom/cidata/
 ```
 
-## 4. Efter install
+### C. Om ISO inte kunde skapas
+
+`prepare-usb.ps1` har då skapat mappen `out\cidata\`. Packa den till ISO med volymetikett **cidata**:
+
+- [ImgBurn](https://www.imgburn.com/) → Build → lägg in filerna → Volume Label `cidata` → spara `localretail-cidata.iso`
+
+Eller WSL:
+
+```powershell
+wsl sudo apt-get install -y genisoimage
+.\prepare-usb.ps1
+```
+
+---
+
+## Linux / macOS
+
+```bash
+bash scripts/linux/autoinstall/make-password.sh 'DittLösen'
+# klistra in hash i user-data
+bash scripts/linux/autoinstall/prepare-usb.sh
+```
+
+Sedan samma Ventoy-steg som ovan.
+
+---
+
+## Efter install
 
 Maskinen startar om, loggar in som `kiosk` och öppnar kassan.
-
-SSH:
 
 ```bash
 ssh kiosk@<ip>
 ```
 
-IP syns i routern eller via skärm/terminal innan kiosken tar över (`hostname -I`).
+IP syns i routern eller med `hostname -I` innan kiosken tar över.
 
 ## Anpassa
 
@@ -65,10 +95,11 @@ IP syns i routern eller via skärm/terminal innan kiosken tar över (`hostname -
 | Användare | `user-data` → `identity.username` (default `kiosk`) |
 | Kassa-URL | `open-kiosk.sh` → `LOCAL_RETAIL_URL` |
 | Fast IP | `user-data` → `network` |
+| SSH-nyckel | `user-data` → `ssh.authorized-keys` |
 
 ## Felsök
 
 - Installer fastnar: kontrollera att lösenordshashen är ifylld och att ISO är **24.04 Server**.
-- Ingen SSH: `sudo systemctl status ssh` efter inloggning.
-- Ingen kiosk: kolla `~/.config/autostart/local-retail-kiosk.desktop` och `/opt/localretail/bin/open-kiosk.sh`.
+- Ingen SSH: `sudo systemctl status ssh`
+- Ingen kiosk: `~/.config/autostart/local-retail-kiosk.desktop` och `/opt/localretail/bin/open-kiosk.sh`
 - Kör om first-boot: `sudo rm /var/lib/localretail/kiosk-setup.done && sudo /usr/local/sbin/localretail-kiosk-setup.sh`
