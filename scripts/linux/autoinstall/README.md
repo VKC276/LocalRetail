@@ -2,75 +2,40 @@
 
 Obevakat installerar:
 
-- Ubuntu 24.04 LTS (Server ISO + `ubuntu-desktop-minimal`)
-- OpenSSH-server
-- Chromium
-- Autologin som användaren `kiosk`
-- Autostart av kassan mot `https://retail.vastervikclimbing.se/?kiosk=1`
+- Ubuntu 24.04 LTS + skrivbord (minimal)
+- OpenSSH, GDM autologin som `kiosk`, Xorg (inte Wayland)
+- Chromium i kioskläge mot `https://retail.vastervikclimbing.se/?kiosk=1`
+- `nomodeset` i GRUB (stabilare på tunn klient / Oracle Workstation)
 
-**Viktigt:** `storage.layout: direct` raderar den största disken på måldatorn.
+**Viktigt:** raderar den största disken på måldatorn.
 
 ---
 
-## Linux / Pi — ett skript
+## Bygg USB (Pi5)
 
 ```bash
 cd ~/LocalRetail
 git pull
+# Om du redan har en gammal password-hash och vill byta:
+#   sed -i 's/password: "\$6\$[^"]*"/password: "REPLACE_WITH_PASSWORD_HASH"/' scripts/linux/autoinstall/user-data
 sudo apt-get install -y genisoimage curl python3
-lsblk   # hitta USB, t.ex. /dev/sda
+lsblk
 sudo bash scripts/linux/autoinstall/create-usb.sh /dev/sda
 ```
 
-Skriptet sätter lösenord, installerar Ventoy, kopierar Ubuntu Server till `/iso/`,
-lägger seed i `/ventoy/cidata/` och **bakar in** kernel-raden:
+Skriv `JA`, ange kiosk-lösenord när det frågas (eller: `.../create-usb.sh /dev/sda 'DittLosen'`).
 
-```text
-autoinstall ds=nocloud;s=/ventoy/cidata/ nomodeset
-```
+## Installera kassa
 
-i Ubuntu-GRUB via Ventoy `conf_replace`. Du behöver **inte** trycka `e` i GRUB.
+1. Boota USB på Oracle Workstation  
+2. Ventoy: välj Ubuntu Server-ISO:n under `/iso` (eller vänta timeout)  
+3. GRUB ska visa **Install LocalRetail kiosk (autoinstall)** och starta själv  
+4. Vänta (desktop-paket tar ofta 15–40 min). Skärmen kan vara mörk — det är OK om disken/nät jobbar  
+5. Omstart → autologin som `kiosk` → kassan öppnas  
 
-På kassadatorn: boota USB → välj Ubuntu-ISO:n (eller låt Ventoy-timeout) → autoinstall kör utan dialoger.
-
-Med lösenord som argument:
-
-```bash
-sudo bash scripts/linux/autoinstall/create-usb.sh /dev/sda 'DittLosen'
-```
-
----
-
-## Windows (manuellt)
-
-```powershell
-cd scripts\linux\autoinstall
-powershell -ExecutionPolicy Bypass -File .\prepare-usb.ps1
-```
-
-Sedan Ventoy + kopiera ISO. För obevakad install: bygg hellre USB:n på Pi med `create-usb.sh` ovan.
-
----
-
-## Efter install
-
-```bash
-ssh kiosk@<ip>
-```
-
-## Anpassa
-
-| Inställning | Fil / plats |
-|---|---|
-| Hostname | `user-data` → `identity.hostname` |
-| Användare | `user-data` → `identity.username` (default `kiosk`) |
-| Kassa-URL | `open-kiosk.sh` → `LOCAL_RETAIL_URL` |
-| Fast IP | `user-data` → `network` |
-| SSH-nyckel | `user-data` → `ssh.authorized-keys` |
+SSH: `ssh kiosk@<ip>`
 
 ## Felsök
 
-- Dialoger igen: bygg om USB med senaste `create-usb.sh` (måste ha `/ventoy/ventoy.json` + `ubuntu-server-autoinstall-grub.cfg`).
-- Ingen SSH: `sudo systemctl status ssh`
-- Ingen kiosk: `~/.config/autostart/local-retail-kiosk.desktop`
-- Kör om first-boot: `sudo rm /var/lib/localretail/kiosk-setup.done && sudo /usr/local/sbin/localretail-kiosk-setup.sh`
+- Dialoger / manuell installer: USB saknar `ventoy/ventoy.json` — kör om `create-usb.sh` efter `git pull`
+- Reboot-loop: i GRUB `e` → lägg till `systemd.unit=multi-user.target nomodeset` → inaktivera kiosk-autostart
