@@ -35,6 +35,15 @@ setupcon --force 2>/dev/null || true
 # Apply for current TTY if possible
 loadkeys se 2>/dev/null || true
 
+# Speed up boot: wait-online should accept any interface, short timeout
+mkdir -p /etc/systemd/system/systemd-networkd-wait-online.service.d
+printf '%s\n' '[Service]' 'ExecStart=' 'ExecStart=/lib/systemd/systemd-networkd-wait-online --any --timeout=20' 'TimeoutStartSec=25' \
+  > /etc/systemd/system/systemd-networkd-wait-online.service.d/override.conf
+mkdir -p /etc/systemd/system/NetworkManager-wait-online.service.d
+printf '%s\n' '[Service]' 'TimeoutStartSec=20' \
+  > /etc/systemd/system/NetworkManager-wait-online.service.d/override.conf
+systemctl daemon-reload || true
+
 # GDM autologin + force Xorg (Wayland often crashes with kiosk Chromium on thin clients)
 mkdir -p /etc/gdm3
 cat > /etc/gdm3/custom.conf <<EOF

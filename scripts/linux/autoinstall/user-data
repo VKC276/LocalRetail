@@ -32,10 +32,12 @@ autoinstall:
         match:
           name: "en*"
         dhcp4: true
+        optional: true
       all-eth:
         match:
           name: "eth*"
         dhcp4: true
+        optional: true
 
   ssh:
     install-server: true
@@ -87,3 +89,8 @@ autoinstall:
     - curtin in-target --target=/target -- update-grub || true
     - curtin in-target --target=/target -- apt-get update
     - curtin in-target --target=/target -- apt-get install -y openssh-server console-setup keyboard-configuration || true
+    # Don't block boot for minutes on unused NICs / slow DHCP
+    - mkdir -p /target/etc/systemd/system/systemd-networkd-wait-online.service.d
+    - printf '%s\n' '[Service]' 'ExecStart=' 'ExecStart=/lib/systemd/systemd-networkd-wait-online --any --timeout=20' 'TimeoutStartSec=25' > /target/etc/systemd/system/systemd-networkd-wait-online.service.d/override.conf
+    - mkdir -p /target/etc/systemd/system/NetworkManager-wait-online.service.d
+    - printf '%s\n' '[Service]' 'TimeoutStartSec=20' > /target/etc/systemd/system/NetworkManager-wait-online.service.d/override.conf
