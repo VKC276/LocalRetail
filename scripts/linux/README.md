@@ -49,3 +49,40 @@ bash ~/LocalRetail/scripts/linux/update.sh
 ```
 
 Kassans webbinnehåll kommer från GitHub Pages; ingen lokal webserver.
+
+---
+
+## 4. Kortläsare (Klipp 10 kort)
+
+På **samma** Lubuntu-dator som visar `retail.vastervikclimbing.se` installeras
+kiosk-**agenten** (läser USB-läsaren och skickar till Cloudflare). Chromium från
+Kiosk-repot installeras **inte** — Retail-kiosken öppnas redan via `install.sh`.
+
+```bash
+# Valfritt: sätt token direkt
+export KIOSK_TOKEN='samma-som-wrangler-secret-KIOSK_TOKEN'
+# Valfritt: eget id (måste matcha WallFlow → Kassainställningar → kiosk-id)
+export KIOSK_ID=reception
+
+bash ~/LocalRetail/scripts/linux/install-card-reader.sh
+```
+
+Sedan:
+
+```bash
+# YAROGNTEC / SDZNKJLTD (ffff:0035) — krävs ofta, annars kan USB bli ostabilt
+sudo vkc-kiosk setup-reader
+sudo reboot
+
+vkc-kiosk configure-reader
+vkc-kiosk save-config
+sudo systemctl enable --now vkc-kiosk
+vkc-kiosk status
+```
+
+**Viktigt:** `CLOUDFLARE.kioskId` i `~/vkc-kiosk/config.json` måste vara **samma**
+värde som under WallFlow → Självbetjäningskassa → Kassainställningar → kiosk-id
+(standard `reception`). Då syns blippen i Retail under **Klipp 10 kort**.
+
+Token: samma secret som `npx wrangler secret put KIOSK_TOKEN` i Kiosk-Workern —
+**inte** admin-token.
