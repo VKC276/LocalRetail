@@ -34,6 +34,8 @@ export type Catalog = {
   swishNumber?: string;
   swishConfigured: boolean;
   swishButtonColor?: string;
+  clipTenCardsEnabled?: boolean;
+  clipKioskId?: string;
   homeOrder?: string[];
   homeQrButtons?: HomeQrButton[];
   homeBackgroundUrl?: string | null;
@@ -52,6 +54,11 @@ export type CheckoutResult = {
 };
 
 export const WALLFLOW_URL = String(import.meta.env.VITE_WALLFLOW_URL ?? "https://wallflow.muddy-rice-38d4.workers.dev").replace(
+  /\/$/,
+  "",
+);
+
+export const KIOSK_URL = String(import.meta.env.VITE_KIOSK_URL ?? "https://vkc-kiosk.muddy-rice-38d4.workers.dev").replace(
   /\/$/,
   "",
 );

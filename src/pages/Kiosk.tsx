@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { CATALOG_POLL_MS, fetchCatalog, fetchCatalogRevision, recordKioskSale, type CartItem, type Catalog, type CheckoutResult, type EntryPage, type HomeQrButton, type Product } from "../api";
+import { CATALOG_POLL_MS, fetchCatalog, fetchCatalogRevision, KIOSK_URL, recordKioskSale, type CartItem, type Catalog, type CheckoutResult, type EntryPage, type HomeQrButton, type Product } from "../api";
 import { readCachedCatalog, readCachedRevision, withLocalImages, writeCachedCatalog } from "../catalogCache";
 import { swishQrDataUrl } from "../swishQr";
 import { textQrDataUrl } from "../infoQr";
 import CartPanel from "../components/CartPanel";
+import ClipTenCards, { RESULT_HOME_MS } from "../components/ClipTenCards";
 import ProductTile from "../components/ProductTile";
 import VirtualKeyboard from "../components/VirtualKeyboard";
 import { formatSek } from "../format";
@@ -16,7 +17,7 @@ const CART_IDLE_MS = 5 * 60 * 1000;
 const CART_WARN_MS = 60 * 1000;
 const HOME_IDLE_MS = 5 * 60 * 1000;
 
-type KioskView = "home" | "swish";
+type KioskView = "home" | "swish" | "clip";
 type LinkOverlay = EntryPage | null;
 
 type Flyer = {
@@ -56,6 +57,7 @@ function homeSlots(catalog: Catalog | null): string[] {
   const buttons = catalog?.homeQrButtons || [];
   const ids = new Set(buttons.map((b) => b.id));
   ids.add("swish");
+  if (catalog?.clipTenCardsEnabled) ids.add("clip");
   const out: string[] = [];
   const seen = new Set<string>();
   for (const slot of catalog?.homeOrder || []) {
@@ -70,6 +72,7 @@ function homeSlots(catalog: Catalog | null): string[] {
     }
   }
   if (!seen.has("swish")) out.push("swish");
+  if (catalog?.clipTenCardsEnabled && !seen.has("clip")) out.push("clip");
   return out;
 }
 
@@ -104,10 +107,18 @@ export default function Kiosk() {
   const gridRef = useRef<HTMLDivElement>(null);
   const flyerSeq = useRef(0);
   const checkoutSettled = useRef(false);
+  const clipHomeTimer = useRef<number | null>(null);
 
   const bumpActivity = () => {
     lastActivity.current = Date.now();
     setIdleLeftMs(null);
+  };
+
+  const clearClipHomeTimer = () => {
+    if (clipHomeTimer.current) {
+      window.clearTimeout(clipHomeTimer.current);
+      clipHomeTimer.current = null;
+    }
   };
 
   useDragScroll(gridRef, bumpActivity);
@@ -238,6 +249,7 @@ export default function Kiosk() {
   };
 
   const goHome = () => {
+    clearClipHomeTimer();
     setView("home");
     setLinkOverlay(null);
     setCart([]);
@@ -255,6 +267,12 @@ export default function Kiosk() {
     bumpActivity();
     setLinkOverlay(null);
     setView("swish");
+  };
+
+  const openClipTenCards = () => {
+    bumpActivity();
+    setLinkOverlay(null);
+    setView("clip");
   };
 
   const openLinkOverlay = (page: EntryPage | undefined, fallbackTitle: string) => {
@@ -343,7 +361,7 @@ export default function Kiosk() {
   }, [query, keyboardOpen, checkout]);
 
   useEffect(() => {
-    if (view !== "swish" || cart.length > 0 || checkout || linkOverlay) return;
+    if ((view !== "swish" && view !== "clip") || cart.length > 0 || checkout || linkOverlay) return;
     const tick = () => {
       if (Date.now() - lastActivity.current < HOME_IDLE_MS) return;
       goHome();
@@ -409,6 +427,18 @@ export default function Kiosk() {
                   </button>
                 );
               }
+              if (slot === "clip") {
+                return (
+                  <button
+                    key={slot}
+                    type="button"
+                    className="home-btn home-btn-clip"
+                    onClick={openClipTenCards}
+                  >
+                    Klipp 10 kort
+                  </button>
+                );
+              }
               const page = qrButtonById(catalog, slot);
               const fallback = DEFAULT_QR_COLORS[index % DEFAULT_QR_COLORS.length];
               return (
@@ -449,6 +479,32 @@ export default function Kiosk() {
             </div>
           </div>
         ) : null}
+      </div>
+    );
+  }
+
+  if (view === "clip") {
+    const clipId = String(catalog?.clipKioskId || "reception").trim() || "reception";
+    return (
+      <div className={`kiosk kiosk-clip ${kioskDisplay ? "kiosk-display" : ""} theme-${themeClass}`} onPointerDown={bumpActivity}>
+        <header className="kiosk-top">
+          <div className="kiosk-head">
+            <button type="button" className="ghost home-back" onClick={goHome} aria-label="Tillbaka till startsidan">
+              Tillbaka till startsidan
+            </button>
+            <p className="kiosk-swish-hint">Blippa ditt 10-kort mot läsaren</p>
+          </div>
+        </header>
+        <ClipTenCards
+          kioskUrl={KIOSK_URL}
+          kioskId={clipId}
+          onActivity={bumpActivity}
+          onResult={() => {
+            bumpActivity();
+            clearClipHomeTimer();
+            clipHomeTimer.current = window.setTimeout(() => goHome(), RESULT_HOME_MS);
+          }}
+        />
       </div>
     );
   }

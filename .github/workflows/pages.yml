@@ -26,6 +26,7 @@ jobs:
         env:
           VITE_BASE: /
           VITE_WALLFLOW_URL: https://wallflow.muddy-rice-38d4.workers.dev
+          VITE_KIOSK_URL: https://vkc-kiosk.muddy-rice-38d4.workers.dev
       - uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: dist
