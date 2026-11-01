@@ -5,11 +5,13 @@
 # Användning:
 #   bash scripts/linux/install-card-reader.sh
 #   KIOSK_ID=retail KIOSK_TOKEN='...' bash scripts/linux/install-card-reader.sh
+#
+# Agenten pratar med Cloudflare Worker-API. Den är oberoende av receptionsskärmen.
 set -euo pipefail
 
 KIOSK_REPO="${KIOSK_REPO:-https://github.com/VKC276/Kiosk.git}"
 KIOSK_DIR="${KIOSK_DIR:-$HOME/vkc-kiosk}"
-KIOSK_ID="${KIOSK_ID:-reception}"
+KIOSK_ID="${KIOSK_ID:-retail}"
 KIOSK_USER="${KIOSK_USER:-${USER}}"
 
 echo "==> Klona/uppdatera Kiosk → $KIOSK_DIR"
@@ -38,10 +40,14 @@ data = json.loads(cfg_path.read_text(encoding="utf-8"))
 cf = data.setdefault("CLOUDFLARE", {})
 cf["enabled"] = True
 cf["apiUrl"] = cf.get("apiUrl") or "https://vkc-kiosk.muddy-rice-38d4.workers.dev"
-cf["kioskId"] = os.environ.get("KIOSK_ID") or "reception"
+cf["kioskId"] = os.environ.get("KIOSK_ID") or "retail"
 token = (os.environ.get("KIOSK_TOKEN") or "").strip()
 if token:
     cf["token"] = token
+# Retail-PC ska inte starta Kiosk-karusell/Chromium
+kiosk = data.setdefault("KIOSK", {})
+checkin = kiosk.setdefault("checkin", {})
+checkin["enabled"] = False
 cfg_path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 print(f"Satt CLOUDFLARE.kioskId={cf['kioskId']!r} i {cfg_path}")
 if not cf.get("token") or cf.get("token") == "REPLACE_ME_KIOSK_TOKEN":
@@ -55,6 +61,6 @@ echo "     (CLOUDFLARE.token = samma som KIOSK_TOKEN pa Workern)"
 echo "  2. YAROGNTEC-lasare:  sudo vkc-kiosk setup-reader && sudo reboot"
 echo "  3. Konfigurera lasare:  vkc-kiosk configure-reader && vkc-kiosk save-config"
 echo "  4. Starta agent:       sudo systemctl enable --now vkc-kiosk"
-echo "  5. I WallFlow Kassainstallningar: kiosk-id = $KIOSK_ID"
+echo "  5. I WallFlow Kassainstallningar: kortkanal-id = $KIOSK_ID"
 echo
-echo "Retail-webben lyssnar pa samma kiosk-id via WebSocket — blipp syns under Klipp 10 kort."
+echo "Retail pratar med Worker-API under id $KIOSK_ID — inte med receptionsskärmen."

@@ -484,7 +484,7 @@ export default function Kiosk() {
   }
 
   if (view === "clip") {
-    const clipId = String(catalog?.clipKioskId || "reception").trim() || "reception";
+    const clipId = String(catalog?.clipKioskId || "retail").trim() || "retail";
     return (
       <div className={`kiosk kiosk-clip ${kioskDisplay ? "kiosk-display" : ""} theme-${themeClass}`} onPointerDown={bumpActivity}>
         <header className="kiosk-top">

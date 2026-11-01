@@ -47,8 +47,9 @@ function playSound(status: string | undefined, baseUrl: string) {
 }
 
 /**
- * Same UI flow as Kiosk cloudflare/public/checkin.html — WebSocket to vkc-kiosk hub.
- * After a status result, parent returns home after 5s (instead of resting for next blip).
+ * Self-service 10-card clip UI on Retail.
+ * Talks only to the vkc-kiosk Cloudflare Worker hub (WebSocket) — not the reception
+ * carousel screen. After a status result, parent returns home after 5s.
  */
 export default function ClipTenCards({ kioskUrl, kioskId, onResult, onActivity }: Props) {
   const base = kioskUrl.replace(/\/$/, "");
