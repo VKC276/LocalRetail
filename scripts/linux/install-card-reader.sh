@@ -61,6 +61,6 @@ echo "     (CLOUDFLARE.token = samma som KIOSK_TOKEN pa Workern)"
 echo "  2. YAROGNTEC-lasare:  sudo vkc-kiosk setup-reader && sudo reboot"
 echo "  3. Konfigurera lasare:  vkc-kiosk configure-reader && vkc-kiosk save-config"
 echo "  4. Starta agent:       sudo systemctl enable --now vkc-kiosk"
-echo "  5. I WallFlow Kassainstallningar: kortkanal-id = $KIOSK_ID"
+echo "  5. I WallFlow: kryssa i Visa Klipp 10 kort"
 echo
-echo "Retail pratar med Worker-API under id $KIOSK_ID — inte med receptionsskärmen."
+echo "Retail och agenten anvander kanal-id $KIOSK_ID (fast, ingen admin-installning)."

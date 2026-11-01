@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { CATALOG_POLL_MS, fetchCatalog, fetchCatalogRevision, KIOSK_URL, recordKioskSale, type CartItem, type Catalog, type CheckoutResult, type EntryPage, type HomeQrButton, type Product } from "../api";
+import { CATALOG_POLL_MS, fetchCatalog, fetchCatalogRevision, KIOSK_URL, RETAIL_CLIP_KIOSK_ID, recordKioskSale, type CartItem, type Catalog, type CheckoutResult, type EntryPage, type HomeQrButton, type Product } from "../api";
 import { readCachedCatalog, readCachedRevision, withLocalImages, writeCachedCatalog } from "../catalogCache";
 import { swishQrDataUrl } from "../swishQr";
 import { textQrDataUrl } from "../infoQr";
@@ -484,7 +484,6 @@ export default function Kiosk() {
   }
 
   if (view === "clip") {
-    const clipId = String(catalog?.clipKioskId || "retail").trim() || "retail";
     return (
       <div className={`kiosk kiosk-clip ${kioskDisplay ? "kiosk-display" : ""} theme-${themeClass}`} onPointerDown={bumpActivity}>
         <header className="kiosk-top">
@@ -497,7 +496,7 @@ export default function Kiosk() {
         </header>
         <ClipTenCards
           kioskUrl={KIOSK_URL}
-          kioskId={clipId}
+          kioskId={RETAIL_CLIP_KIOSK_ID}
           onActivity={bumpActivity}
           onResult={() => {
             bumpActivity();

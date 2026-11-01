@@ -35,7 +35,6 @@ export type Catalog = {
   swishConfigured: boolean;
   swishButtonColor?: string;
   clipTenCardsEnabled?: boolean;
-  clipKioskId?: string;
   homeOrder?: string[];
   homeQrButtons?: HomeQrButton[];
   homeBackgroundUrl?: string | null;
@@ -62,6 +61,10 @@ export const KIOSK_URL = String(import.meta.env.VITE_KIOSK_URL ?? "https://vkc-k
   /\/$/,
   "",
 );
+
+/** Fixed hub id for self-service clip — matches agent CLOUDFLARE.kioskId on the retail PC. */
+export const RETAIL_CLIP_KIOSK_ID = "retail";
+
 
 export const CATALOG_POLL_MS = 5 * 60 * 1000;
 

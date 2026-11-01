@@ -81,7 +81,8 @@ sudo systemctl enable --now vkc-kiosk
 vkc-kiosk status
 ```
 
-WallFlow → Kassainställningar → **kortkanal-id** = samma som `CLOUDFLARE.kioskId`
-(standard `retail`).
+Installskriptet sätter `CLOUDFLARE.kioskId=retail` automatiskt (samma id som
+Retail-webben använder). Ingen admin-inställning i WallFlow behövs — bara
+kryssrutan **Visa Klipp 10 kort**.
 
 Token: samma secret som `npx wrangler secret put KIOSK_TOKEN` — **inte** admin-token.
