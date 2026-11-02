@@ -5,7 +5,7 @@ import { readCachedCatalog, readCachedRevision, withLocalImages, writeCachedCata
 import { swishQrDataUrl } from "../swishQr";
 import { textQrDataUrl } from "../infoQr";
 import CartPanel from "../components/CartPanel";
-import ClipTenCards, { RESULT_HOME_MS } from "../components/ClipTenCards";
+import ClipTenCards from "../components/ClipTenCards";
 import ProductTile from "../components/ProductTile";
 import VirtualKeyboard from "../components/VirtualKeyboard";
 import { formatSek } from "../format";
@@ -107,18 +107,9 @@ export default function Kiosk() {
   const gridRef = useRef<HTMLDivElement>(null);
   const flyerSeq = useRef(0);
   const checkoutSettled = useRef(false);
-  const clipHomeTimer = useRef<number | null>(null);
-
   const bumpActivity = () => {
     lastActivity.current = Date.now();
     setIdleLeftMs(null);
-  };
-
-  const clearClipHomeTimer = () => {
-    if (clipHomeTimer.current) {
-      window.clearTimeout(clipHomeTimer.current);
-      clipHomeTimer.current = null;
-    }
   };
 
   useDragScroll(gridRef, bumpActivity);
@@ -249,7 +240,6 @@ export default function Kiosk() {
   };
 
   const goHome = () => {
-    clearClipHomeTimer();
     setView("home");
     setLinkOverlay(null);
     setCart([]);
@@ -500,8 +490,6 @@ export default function Kiosk() {
           onActivity={bumpActivity}
           onResult={() => {
             bumpActivity();
-            clearClipHomeTimer();
-            clipHomeTimer.current = window.setTimeout(() => goHome(), RESULT_HOME_MS);
           }}
         />
       </div>

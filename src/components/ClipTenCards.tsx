@@ -8,18 +8,20 @@ export type ClipStatusPayload = {
   status_color?: string;
   card_number_dec?: string;
   expiry_date?: string;
+  klipp_kvar_local?: number;
 };
 
 type Props = {
   kioskUrl: string;
   kioskId: string;
-  /** Called when a clip/status result is shown (parent starts 5s home timer). */
+  /** Called when a clip/status result is shown (activity / logging). */
   onResult: (data: ClipStatusPayload) => void;
   /** Called on websocket reading/status so idle timeout resets. */
   onActivity?: () => void;
 };
 
-const RESULT_HOME_MS = 5_000;
+/** Hur länge klippresultat visas innan skärmen tar nästa blipp. */
+const RESULT_REST_MS = 5_000;
 const READING_TIMEOUT_MS = 12_000;
 
 function playSound(status: string | undefined, baseUrl: string) {
@@ -48,20 +50,21 @@ function playSound(status: string | undefined, baseUrl: string) {
 
 /**
  * Self-service 10-card clip UI on Retail.
- * Talks only to the vkc-kiosk Cloudflare Worker hub (WebSocket) — not the reception
- * carousel screen. After a status result, parent returns home after 5s.
+ * Blipp → visa saldo → användaren trycker "Klipp en markering" → Worker klipper via WS.
  */
 export default function ClipTenCards({ kioskUrl, kioskId, onResult, onActivity }: Props) {
   const base = kioskUrl.replace(/\/$/, "");
-  const [phase, setPhase] = useState<"rest" | "reading" | "status">("rest");
+  const [phase, setPhase] = useState<"rest" | "reading" | "ready" | "status">("rest");
   const [data, setData] = useState<ClipStatusPayload | null>(null);
   const [mainText, setMainText] = useState("Blippa ditt kort");
   const [secondary, setSecondary] = useState("");
+  const [clipBusy, setClipBusy] = useState(false);
   const readingToken = useRef(0);
-  const phaseRef = useRef<"rest" | "reading" | "status">("rest");
+  const phaseRef = useRef<"rest" | "reading" | "ready" | "status">("rest");
   const lastPlayed = useRef<string | null>(null);
   const phaseTimer = useRef<number | null>(null);
   const hideTimer = useRef<number | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
   const onResultRef = useRef(onResult);
   const onActivityRef = useRef(onActivity);
   onResultRef.current = onResult;
@@ -82,7 +85,26 @@ export default function ClipTenCards({ kioskUrl, kioskId, onResult, onActivity }
     setData(null);
     setMainText("Blippa ditt kort");
     setSecondary("");
+    setClipBusy(false);
     lastPlayed.current = null;
+  };
+
+  const showReady = (payload: ClipStatusPayload) => {
+    clearTimers();
+    readingToken.current += 1;
+    phaseRef.current = "ready";
+    setPhase("ready");
+    setData(payload);
+    setMainText(payload.message || "Du har klipp kvar.");
+    setSecondary(payload.secondary_message || "Tryck på knappen för att klippa.");
+    setClipBusy(false);
+    const status = payload.status;
+    if (status && status !== lastPlayed.current) {
+      playSound(status, base);
+      lastPlayed.current = status;
+    }
+    onActivityRef.current?.();
+    onResultRef.current(payload);
   };
 
   const showStatus = (payload: ClipStatusPayload | null) => {
@@ -92,11 +114,16 @@ export default function ClipTenCards({ kioskUrl, kioskId, onResult, onActivity }
       rest();
       return;
     }
+    if (payload.status === "TENCARD_READY") {
+      showReady(payload);
+      return;
+    }
     phaseRef.current = "status";
     setPhase("status");
     setData(payload);
     setMainText(payload.message || "");
     setSecondary(payload.secondary_message || "");
+    setClipBusy(false);
     const status = payload.status;
     if (status && status !== lastPlayed.current) {
       playSound(status, base);
@@ -111,10 +138,10 @@ export default function ClipTenCards({ kioskUrl, kioskId, onResult, onActivity }
     }
     onActivityRef.current?.();
     onResultRef.current(payload);
+    hideTimer.current = window.setTimeout(() => rest(), RESULT_REST_MS);
   };
 
   const showReading = (message?: string) => {
-    if (phaseRef.current === "status") return;
     clearTimers();
     const token = ++readingToken.current;
     phaseRef.current = "reading";
@@ -128,12 +155,42 @@ export default function ClipTenCards({ kioskUrl, kioskId, onResult, onActivity }
       showStatus({
         type: "UNKNOWN",
         status: "CHECKIN_ERROR",
-        message: "Det gick inte att klippa ditt kort.",
+        message: "Det gick inte att läsa ditt kort.",
         secondary_message: "Prova igen.",
         status_color: "orange",
         card_number_dec: "",
       });
     }, READING_TIMEOUT_MS);
+  };
+
+  const confirmClip = () => {
+    if (clipBusy || phaseRef.current !== "ready") return;
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      showStatus({
+        type: "UNKNOWN",
+        status: "CHECKIN_ERROR",
+        message: "Ingen anslutning till klipp-tjänsten.",
+        secondary_message: "Prova igen om en stund.",
+        status_color: "orange",
+        card_number_dec: data?.card_number_dec || "",
+      });
+      return;
+    }
+    setClipBusy(true);
+    showReading("Klipper markering…");
+    try {
+      ws.send(JSON.stringify({ type: "confirm_clip" }));
+    } catch {
+      showStatus({
+        type: "UNKNOWN",
+        status: "CHECKIN_ERROR",
+        message: "Kunde inte skicka klipp.",
+        secondary_message: "Prova igen.",
+        status_color: "orange",
+        card_number_dec: data?.card_number_dec || "",
+      });
+    }
   };
 
   useEffect(() => {
@@ -146,6 +203,7 @@ export default function ClipTenCards({ kioskUrl, kioskId, onResult, onActivity }
       const proto = base.startsWith("https") ? "wss:" : "ws:";
       const host = base.replace(/^https?:\/\//, "");
       ws = new WebSocket(`${proto}//${host}/api/kiosk/ws?kiosk=${encodeURIComponent(kioskId)}`);
+      wsRef.current = ws;
       ws.onmessage = (ev) => {
         if (ev.data === "pong") return;
         let msg: { type?: string; message?: string; data?: ClipStatusPayload };
@@ -159,6 +217,7 @@ export default function ClipTenCards({ kioskUrl, kioskId, onResult, onActivity }
         else if (msg.type === "clear") rest();
       };
       ws.onclose = () => {
+        if (wsRef.current === ws) wsRef.current = null;
         if (closed) return;
         retry = window.setTimeout(connect, 1500);
       };
@@ -175,12 +234,15 @@ export default function ClipTenCards({ kioskUrl, kioskId, onResult, onActivity }
       } catch {
         /* ignore */
       }
+      wsRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- connect once per url/id
   }, [base, kioskId]);
 
-  const color = phase === "reading" ? "blue" : phase === "status" ? data?.status_color || "" : "";
+  const color =
+    phase === "reading" ? "blue" : phase === "ready" || phase === "status" ? data?.status_color || "" : "";
   const resting = phase === "rest";
+  const showClipButton = phase === "ready" && data?.status === "TENCARD_READY";
 
   return (
     <div className={`clip-screen${color ? ` status-${color}` : ""}`}>
@@ -192,9 +254,14 @@ export default function ClipTenCards({ kioskUrl, kioskId, onResult, onActivity }
         {data?.type === "MEMBER" && data.expiry_date ? (
           <p className="clip-meta">Giltig till: {String(data.expiry_date).split("T")[0]}</p>
         ) : null}
+        {showClipButton ? (
+          <button type="button" className="clip-confirm-btn" onClick={confirmClip} disabled={clipBusy}>
+            Klipp en markering
+          </button>
+        ) : null}
       </div>
     </div>
   );
 }
 
-export { RESULT_HOME_MS };
+export { RESULT_REST_MS };

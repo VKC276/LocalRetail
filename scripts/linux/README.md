@@ -56,10 +56,12 @@ Kassans webbinnehåll kommer från GitHub Pages; ingen lokal webserver.
 
 På **samma** Lubuntu-dator som visar `retail.vastervikclimbing.se` körs bara
 **kortläsar-agenten** (från Kiosk-repot). Den skickar blipp till Cloudflare Worker-API.
+Receptionsskärmen har **ingen** nedre kortyta längre — allt klipp/status sker här.
 
 - **Ingen** beroende av receptionens kioskskärm / karusell
 - **Ingen** Chromium från Kiosk-install (`SKIP_BROWSER=1`)
 - Eget kanal-id **`retail`** (dela inte `reception` med den gamla skärmen)
+- På kiosk-Pi:n: `sudo systemctl disable --now vkc-kiosk` (lämna browser/karusell)
 
 ```bash
 export KIOSK_TOKEN='samma-som-wrangler-secret-KIOSK_TOKEN'

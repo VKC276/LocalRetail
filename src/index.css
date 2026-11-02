@@ -266,6 +266,29 @@ p {
   color: #666;
 }
 
+.clip-confirm-btn {
+  margin-top: 28px;
+  border: 0;
+  border-radius: 14px;
+  background: #111;
+  color: #fff;
+  font-size: 28px;
+  font-weight: 700;
+  padding: 18px 28px;
+  min-width: min(420px, 85vw);
+  cursor: pointer;
+}
+
+.clip-confirm-btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.clip-screen.status-purple .clip-confirm-btn {
+  background: #fff;
+  color: #6a1b9a;
+}
+
 .info-card .info-logo {
   width: min(160px, 28vw);
   height: min(160px, 28vw);
