@@ -491,6 +491,7 @@ export default function Kiosk() {
           onResult={() => {
             bumpActivity();
           }}
+          onClipSuccessHome={goHome}
         />
       </div>
     );

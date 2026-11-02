@@ -16,11 +16,15 @@ type Props = {
   kioskId: string;
   /** Called when a clip/status result is shown (activity / logging). */
   onResult: (data: ClipStatusPayload) => void;
+  /** Called after a successful clip OK screen has been shown. */
+  onClipSuccessHome?: () => void;
   /** Called on websocket reading/status so idle timeout resets. */
   onActivity?: () => void;
 };
 
-/** Hur länge klippresultat visas innan skärmen tar nästa blipp. */
+/** Hur länge grön OK visas innan startsidan. */
+const CLIP_OK_HOME_MS = 2_500;
+/** Övriga statusar (fel m.m.) innan åter till Blippa. */
 const RESULT_REST_MS = 5_000;
 const READING_TIMEOUT_MS = 12_000;
 
@@ -52,7 +56,7 @@ function playSound(status: string | undefined, baseUrl: string) {
  * Self-service 10-card clip UI on Retail.
  * Blipp → visa saldo → användaren trycker "Klipp en markering" → Worker klipper via WS.
  */
-export default function ClipTenCards({ kioskUrl, kioskId, onResult, onActivity }: Props) {
+export default function ClipTenCards({ kioskUrl, kioskId, onResult, onClipSuccessHome, onActivity }: Props) {
   const base = kioskUrl.replace(/\/$/, "");
   const [phase, setPhase] = useState<"rest" | "reading" | "ready" | "status">("rest");
   const [data, setData] = useState<ClipStatusPayload | null>(null);
@@ -66,8 +70,10 @@ export default function ClipTenCards({ kioskUrl, kioskId, onResult, onActivity }
   const hideTimer = useRef<number | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const onResultRef = useRef(onResult);
+  const onClipSuccessHomeRef = useRef(onClipSuccessHome);
   const onActivityRef = useRef(onActivity);
   onResultRef.current = onResult;
+  onClipSuccessHomeRef.current = onClipSuccessHome;
   onActivityRef.current = onActivity;
 
   const clearTimers = () => {
@@ -118,26 +124,36 @@ export default function ClipTenCards({ kioskUrl, kioskId, onResult, onActivity }
       showReady(payload);
       return;
     }
+    const status = payload.status;
+    const clipOk = status === "TENCARD_CLIPPED_OK" || status === "TENCARD_CLIPPED_LAST";
+    const displayPayload =
+      clipOk ? { ...payload, status_color: "green" } : payload;
+
     phaseRef.current = "status";
     setPhase("status");
-    setData(payload);
-    setMainText(payload.message || "");
-    setSecondary(payload.secondary_message || "");
+    setData(displayPayload);
+    setMainText(displayPayload.message || "");
+    setSecondary(
+      status === "TENCARD_CLIPPED_LAST"
+        ? "Lämna in kortet i reception"
+        : displayPayload.secondary_message || "",
+    );
     setClipBusy(false);
-    const status = payload.status;
     if (status && status !== lastPlayed.current) {
       playSound(status, base);
       lastPlayed.current = status;
     }
-    if (status === "TENCARD_CLIPPED_LAST") {
-      phaseTimer.current = window.setTimeout(() => {
-        setMainText("Lämna in kortet i reception");
-        setSecondary("");
-        setData((prev) => (prev ? { ...prev, status_color: "orange" } : prev));
-      }, 3000);
-    }
     onActivityRef.current?.();
     onResultRef.current(payload);
+
+    if (clipOk) {
+      // Grön OK först, sedan startsidan.
+      hideTimer.current = window.setTimeout(() => {
+        onClipSuccessHomeRef.current?.();
+      }, CLIP_OK_HOME_MS);
+      return;
+    }
+
     hideTimer.current = window.setTimeout(() => rest(), RESULT_REST_MS);
   };
 
@@ -280,4 +296,4 @@ export default function ClipTenCards({ kioskUrl, kioskId, onResult, onActivity }
   );
 }
 
-export { RESULT_REST_MS };
+export { RESULT_REST_MS, CLIP_OK_HOME_MS };
