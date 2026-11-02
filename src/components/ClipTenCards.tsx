@@ -243,17 +243,33 @@ export default function ClipTenCards({ kioskUrl, kioskId, onResult, onActivity }
     phase === "reading" ? "blue" : phase === "ready" || phase === "status" ? data?.status_color || "" : "";
   const resting = phase === "rest";
   const showClipButton = phase === "ready" && data?.status === "TENCARD_READY";
+  const remaining =
+    typeof data?.klipp_kvar_local === "number"
+      ? data.klipp_kvar_local
+      : null;
 
   return (
     <div className={`clip-screen${color ? ` status-${color}` : ""}`}>
-      <div className={`clip-box${resting ? " resting" : ""}`}>
-        <h2>Klipp 10 kort</h2>
-        <p className="clip-message">{mainText}</p>
-        {secondary ? <p className="clip-secondary">{secondary}</p> : null}
-        {data?.card_number_dec ? <p className="clip-meta">Kortnr: {data.card_number_dec}</p> : null}
-        {data?.type === "MEMBER" && data.expiry_date ? (
-          <p className="clip-meta">Giltig till: {String(data.expiry_date).split("T")[0]}</p>
-        ) : null}
+      <div className="clip-panel">
+        <div className={`clip-box${resting ? " resting" : ""}`}>
+          <h2>Klipp 10 kort</h2>
+          {showClipButton && remaining != null ? (
+            <>
+              <p className="clip-remaining-label">Klipp kvar</p>
+              <p className="clip-remaining-value">{remaining}</p>
+              {secondary ? <p className="clip-secondary">{secondary}</p> : null}
+            </>
+          ) : (
+            <>
+              <p className="clip-message">{mainText}</p>
+              {secondary ? <p className="clip-secondary">{secondary}</p> : null}
+            </>
+          )}
+          {data?.card_number_dec ? <p className="clip-meta">Kortnr: {data.card_number_dec}</p> : null}
+          {data?.type === "MEMBER" && data.expiry_date ? (
+            <p className="clip-meta">Giltig till: {String(data.expiry_date).split("T")[0]}</p>
+          ) : null}
+        </div>
         {showClipButton ? (
           <button type="button" className="clip-confirm-btn" onClick={confirmClip} disabled={clipBusy}>
             Klipp en markering

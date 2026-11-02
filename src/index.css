@@ -222,8 +222,16 @@ p {
 .clip-screen.status-purple { background: #9c27b0; }
 .clip-screen.status-blue { background: #2196f3; }
 
-.clip-box {
+.clip-panel {
   width: min(800px, 92vw);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 20px;
+}
+
+.clip-box {
+  width: 100%;
   background: #fff;
   border-radius: 17px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
@@ -253,6 +261,23 @@ p {
   border-radius: 17px;
 }
 
+.clip-remaining-label {
+  margin: 8px 0 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #666;
+}
+
+.clip-remaining-value {
+  margin: 4px 0 0;
+  font-size: 96px;
+  font-weight: 800;
+  line-height: 1;
+  color: #111;
+}
+
 .clip-secondary {
   margin: 12px 0 0;
   font-size: 24px;
@@ -267,26 +292,38 @@ p {
 }
 
 .clip-confirm-btn {
-  margin-top: 28px;
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-height: 96px;
   border: 0;
   border-radius: 14px;
   background: #111;
   color: #fff;
-  font-size: 28px;
-  font-weight: 700;
-  padding: 18px 28px;
-  min-width: min(420px, 85vw);
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  padding: 22px 28px;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.28);
+  touch-action: manipulation;
   cursor: pointer;
+}
+
+.clip-confirm-btn:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.28);
 }
 
 .clip-confirm-btn:disabled {
   opacity: 0.55;
   cursor: wait;
+  box-shadow: none;
 }
 
 .clip-screen.status-purple .clip-confirm-btn {
   background: #fff;
-  color: #6a1b9a;
+  color: #4a148c;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.22);
 }
 
 .info-card .info-logo {
